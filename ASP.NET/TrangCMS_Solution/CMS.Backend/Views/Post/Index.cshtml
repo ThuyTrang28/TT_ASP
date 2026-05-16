@@ -25,10 +25,7 @@
                             <p class="card-text text-secondary mb-3" style="font-size: 0.85rem;">
                                 Ngày đăng: @item.CreatedDate.ToString("dd/MM/yyyy")
                             </p>
-
-                            <div>
-                                <a href="#" class="btn btn-outline-primary btn-sm">Xem chi tiết</a>
-                            </div>
+                            <a asp-controller="Post" asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-primary btn-sm">Xem chi tiết</a>
                         </div>
                     </div>
                 </div>

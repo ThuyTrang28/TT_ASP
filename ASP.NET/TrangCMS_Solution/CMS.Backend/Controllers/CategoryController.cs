@@ -1,16 +1,20 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using CMS.Data.Entities; // Kết nối tới lớp dữ liệu bạn vừa tạo
+﻿using CMS.Data;
+using Microsoft.AspNetCore.Mvc;
 
 public class CategoryController : Controller
 {
+    private readonly ApplicationDbContext _context;
+
+    // "Tiêm" kết nối vào Controller
+    public CategoryController(ApplicationDbContext context)
+    {
+        _context = context;
+    }
+
     public IActionResult Index()
     {
-        // Tạo danh sách dữ liệu mẫu trực tiếp trong code
-        var list = new List<Category> {
-            new Category { Id = 1, Name = "Tin Công Nghệ", Description = "Review Laptop, AI" },
-            new Category { Id = 2, Name = "Giáo Dục", Description = "Thông tin tuyển sinh" }
-        };
-        return View(list); // Gửi danh sách này sang giao diện
+        // Lấy dữ liệu THẬT từ bảng Categories trong SQL
+        var data = _context.Categories.ToList();
+        return View(data);
     }
 }
-
