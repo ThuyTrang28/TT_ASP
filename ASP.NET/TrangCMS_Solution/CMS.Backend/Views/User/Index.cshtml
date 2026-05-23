@@ -1,53 +1,68 @@
 ﻿@model IEnumerable<CMS.Data.Entities.User>
 
+@{
+    ViewData["Title"] = "Quản lý thành viên";
+}
+
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="text-primary fw-bold text-uppercase m-0">QUẢN LÝ TÀI KHOẢN HỆ THỐNG</h2>
-        <button class="btn btn-success btn-sm"><i class="bi bi-plus-lg"></i> Thêm người dùng</button>
+        <h2 class="text-dark fw-bold m-0 text-uppercase" style="letter-spacing: 1px;">Quản Lý Thành Viên</h2>
+        <a href="#" class="btn btn-success btn-sm px-3 py-2 fw-semibold">
+            <i class="bi bi-plus-lg"></i> + Thêm thành viên mới
+        </a>
     </div>
 
-    <div class="card shadow-sm">
+    <div class="card shadow-sm border-0 rounded-3">
         <div class="card-body p-0">
-            <table class="table table-hover table-striped m-0">
-                <thead class="table-dark">
+            <table class="table table-hover table-striped align-middle mb-0">
+                <thead class="table-light">
                     <tr>
-                        <th style="width: 80px;" class="text-center">ID</th>
-                        <th>Tên tài khoản</th>
-                        <th>Họ và tên</th>
-                        <th>Quyền hạn (Role)</th>
-                        <th style="width: 200px;" class="text-center">Hành động</th>
+                        <th class="ps-4 text-secondary" style="width: 10%;">ID</th>
+                        <th class="text-secondary" style="width: 25%;">Tên Đăng Nhập</th>
+                        <th class="text-secondary" style="width: 30%;">Họ Và Tên</th>
+                        <th class="text-secondary" style="width: 15%;">Quyền Hạn</th>
+                        <th class="text-center pe-4" style="width: 20%;">Thao Tác</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @if (Model != null && Model.Any())
-                    {
-                        @foreach (var item in Model)
-                        {
-                            <tr>
-                                <td class="text-center fw-bold">@item.Id</td>
-                                <td>@item.Username</td>
-                                <td>@item.FullName</td>
-                                <td>
-                                    @if (item.Role == "Quản trị viên")
-                                    {
-                                        <span class="badge bg-danger">@item.Role</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge bg-info text-dark">@item.Role</span>
-                                    }
-                                </td>
-                                <td class="text-center">
-                                    <a href="#" class="btn btn-warning btn-sm me-1">Sửa</a>
-                                    <a href="#" class="btn btn-danger btn-sm">Xóa</a>
-                                </td>
-                            </tr>
-                        }
-                    }
-                    else
+                    @foreach (var item in Model)
                     {
                         <tr>
-                            <td colspan="5" class="text-center text-muted py-4">Chưa có người dùng nào trong hệ thống.</td>
+                            <td class="ps-4 fw-bold text-secondary">@item.Id</td>
+                            <td class="fw-semibold text-dark">@item.Username</td>
+                            <td>@item.FullName</td>
+                            <td>
+                                @if (item.Role != null)
+                                {
+                                    switch (item.Role.Trim())
+                                    {
+                                        case "Admin":
+                                        case "Administrator":
+                                            <span class="badge bg-danger px-2.5 py-1.5">Administrator</span>
+                                            break;
+
+                                        case "Editor":
+                                            <span class="badge bg-info text-dark px-2.5 py-1.5">Editor</span>
+                                            break;
+
+                                        case "Moderator":
+                                            <span class="badge bg-warning text-dark px-2.5 py-1.5">Moderator</span>
+                                            break;
+
+                                        default: // Trường hợp là "User" hoặc các quyền khác
+                                                 <span class="badge bg-secondary px-2.5 py-1.5">@item.Role</span>
+                                            break;
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="badge bg-light text-muted px-2.5 py-1.5">Chưa phân quyền</span>
+                                }
+                            </td>
+                            <td class="text-center pe-4">
+                                <a href="#" class="btn btn-outline-warning btn-sm me-1 font-monospace">Sửa</a>
+                                <a href="#" class="btn btn-outline-danger btn-sm font-monospace">Xóa</a>
+                            </td>
                         </tr>
                     }
                 </tbody>

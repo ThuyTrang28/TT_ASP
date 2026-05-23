@@ -1,38 +1,36 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using CMS.Data.Entities;
-using System.Collections.Generic;
+﻿/* Sinh viên: Lê Nguyễn Thùy Trang
+ * MSSV: 2123110130
+ * Lớp: CCQ2311D
+ * Ngày sửa: 23/05/2026
+ * Mô tả: Bước 2 - Quản lý thành viên lấy dữ liệu trực tiếp từ Database
+ */
 
-public class UserController : Controller
+using Microsoft.AspNetCore.Mvc;
+using CMS.Data; // Thư mục chứa file ApplicationDbContext của bạn
+using CMS.Data.Entities; // Thư mục chứa thực thể User
+using System.Linq;
+
+namespace CMS.Backend.Controllers
 {
-    public IActionResult Index()
+    public class UserController : Controller
     {
-        // Tạo danh sách dữ liệu mẫu người dùng dựa trên thực thể bạn cung cấp
-        // Lưu ý: Đối với mật khẩu thực tế sẽ mã hóa (Hash), ở đây là dữ liệu mẫu demo
-        var list = new List<User>
-        {
-            new User {
-                Id = 1,
-                Username = "admin_trang",
-                PasswordHash = "A6xn92...",
-                FullName = "Lê Nguyễn Thùy Trang",
-                Role = "Quản trị viên"
-            },
-            new User {
-                Id = 2,
-                Username = "editor_nguyen",
-                PasswordHash = "B7yt31...",
-                FullName = "Nguyễn Văn Biên Tập",
-                Role = "Biên tập viên"
-            },
-            new User {
-                Id = 3,
-                Username = "editor_hoa",
-                PasswordHash = "C9pl12...",
-                FullName = "Trần Thị Hoa",
-                Role = "Biên tập viên"
-            }
-        };
+        // 1. Khai báo biến ngữ cảnh cơ sở dữ liệu để kết nối SQL Server
+        private readonly ApplicationDbContext _context;
 
-        return View(list); // Truyền danh sách người dùng sang giao diện
+        // 2. Thực hiện "Tiêm" ApplicationDbContext thông qua hàm khởi tạo (Constructor Injection)
+        public UserController(ApplicationDbContext context)
+        {
+            _context = context;
+        }
+
+        // 3. Viết Action Index() để lấy danh sách dữ liệu người dùng thật từ Database
+        public IActionResult Index()
+        {
+            // Lấy toàn bộ danh sách thành viên từ bảng Users trong SQL Server
+            var users = _context.Users.ToList();
+
+            // Gửi danh sách dữ liệu thật này sang View hiển thị giao diện
+            return View(users);
+        }
     }
 }
