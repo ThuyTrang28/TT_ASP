@@ -1,0 +1,46 @@
+﻿@model CMS.Data.Entities.Post
+@{
+    Layout = "_LayoutAdmin";
+    ViewData["Title"] = "Chỉnh sửa bài viết";
+}
+
+<div class="container mt-4">
+    <div class="card shadow-sm">
+        <div class="card-header bg-warning py-3">
+            <h4 class="mb-0 fw-bold"><i class="bi bi-pencil-square"></i> CHỈNH SỬA BÀI VIẾT</h4>
+        </div>
+        <div class="card-body">
+            <form asp-action="Edit" method="post" enctype="multipart/form-data">
+                <input type="hidden" asp-for="Id" />
+
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Tiêu đề:</label>
+                            <input asp-for="Title" class="form-control" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Nội dung:</label>
+                            <textarea asp-for="Content" class="form-control" rows="10"></textarea>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Chuyên mục:</label>
+                            <select asp-for="CategoryId" class="form-select" asp-items="ViewBag.CategoryList"></select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Ảnh hiện tại:</label>
+                            <img src="@Model.ImageUrl" class="img-thumbnail d-block mb-2" style="max-height: 100px;" />
+                            <input type="file" name="uploadImage" class="form-control" />
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-warning fw-bold">Lưu thay đổi</button>
+                            <a asp-action="Index" class="btn btn-secondary mt-2">Quay lại</a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

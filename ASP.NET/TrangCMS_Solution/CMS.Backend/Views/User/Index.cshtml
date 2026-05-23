@@ -1,14 +1,15 @@
 ﻿@model IEnumerable<CMS.Data.Entities.User>
 
 @{
+    Layout = "_LayoutAdmin";
     ViewData["Title"] = "Quản lý thành viên";
 }
 
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="text-dark fw-bold m-0 text-uppercase" style="letter-spacing: 1px;">Quản Lý Thành Viên</h2>
-        <a href="#" class="btn btn-success btn-sm px-3 py-2 fw-semibold">
-            <i class="bi bi-plus-lg"></i> + Thêm thành viên mới
+        <a asp-action="Create" class="btn btn-success btn-sm px-3 py-2 fw-semibold">
+            <i class="bi bi-plus-lg"></i> Thêm thành viên mới
         </a>
     </div>
 
@@ -32,25 +33,18 @@
                             <td class="fw-semibold text-dark">@item.Username</td>
                             <td>@item.FullName</td>
                             <td>
-                                @if (item.Role != null)
+                                @if (!string.IsNullOrEmpty(item.Role))
                                 {
-                                    switch (item.Role.Trim())
+                                    @switch (item.Role.Trim())
                                     {
                                         case "Admin":
-                                        case "Administrator":
-                                            <span class="badge bg-danger px-2.5 py-1.5">Administrator</span>
+                                            <span class="badge bg-danger px-2.5 py-1.5">Admin</span>
                                             break;
-
                                         case "Editor":
                                             <span class="badge bg-info text-dark px-2.5 py-1.5">Editor</span>
                                             break;
-
-                                        case "Moderator":
-                                            <span class="badge bg-warning text-dark px-2.5 py-1.5">Moderator</span>
-                                            break;
-
-                                        default: // Trường hợp là "User" hoặc các quyền khác
-                                                 <span class="badge bg-secondary px-2.5 py-1.5">@item.Role</span>
+                                        default:
+                                            <span class="badge bg-secondary px-2.5 py-1.5">@item.Role</span>
                                             break;
                                     }
                                 }
@@ -60,8 +54,13 @@
                                 }
                             </td>
                             <td class="text-center pe-4">
-                                <a href="#" class="btn btn-outline-warning btn-sm me-1 font-monospace">Sửa</a>
-                                <a href="#" class="btn btn-outline-danger btn-sm font-monospace">Xóa</a>
+                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-outline-warning btn-sm me-1 font-monospace">Sửa</a>
+
+                                <a asp-action="Delete" asp-route-id="@item.Id"
+                                   class="btn btn-outline-danger btn-sm font-monospace"
+                                   onclick="return confirm('Bạn có chắc chắn muốn xóa thành viên @item.Username không?')">
+                                    Xóa
+                                </a>
                             </td>
                         </tr>
                     }

@@ -1,6 +1,7 @@
 ﻿@model CMS.Data.Entities.Post
 
 @{
+    Layout = "_LayoutAdmin";
     ViewData["Title"] = Model.Title;
 }
 
@@ -38,8 +39,8 @@
                 <img src="@Model.ImageUrl" class="img-fluid rounded shadow" alt="@Model.Title" style="max-height: 450px; width: 100%; object-fit: cover;" onerror="this.src='https://via.placeholder.com/800x450?text=No+Image+Available'">
             </div>
 
-            <div class="post-content lh-lg fs-5 text-justify" style="white-space: pre-line; color: #2c3e50; text-align: justify;">
-                @Model.Content
+            <div class="post-content lh-lg fs-5 text-justify" style="color: #2c3e50; text-align: justify;">
+                @Html.Raw(Model.Content)
             </div>
         </div>
     </div>
