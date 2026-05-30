@@ -1,0 +1,75 @@
+﻿@model CMS.Data.Entities.Customer
+
+@{
+    Layout = "_LayoutAdmin";
+    ViewData["Title"] = "Sửa khách hàng";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-success fw-bold m-0 text-uppercase" style="letter-spacing: 1px;">Sửa Thông Tin Khách Hàng</h2>
+        <a asp-action="Index" class="btn btn-outline-secondary btn-sm px-3 py-2 fw-semibold shadow-sm">
+            <i class="bi bi-arrow-left"></i> Quay lại danh sách
+        </a>
+    </div>
+
+    <div class="card shadow-sm border-0 rounded-3">
+        <div class="card-body p-4">
+            <form asp-action="Edit" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Id" />
+
+                <div class="row justify-content-center">
+                    <div class="col-md-8">
+                        <div class="p-3 bg-light rounded-3 mb-4 border-start border-warning border-4">
+                            <small class="text-muted d-block text-uppercase fw-semibold">Mã khách hàng hiện tại</small>
+                            <span class="text-secondary fw-bold font-monospace fs-5">#@Model.Id</span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="FullName" class="form-label fw-semibold">Họ và Tên <span class="text-danger">*</span></label>
+                            <input asp-for="FullName" class="form-control" />
+                            <span asp-validation-for="FullName" class="text-danger small"></span>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label asp-for="Email" class="form-label fw-semibold">Địa chỉ Email <span class="text-danger">*</span></label>
+                                <input asp-for="Email" type="email" class="form-control" />
+                                <span asp-validation-for="Email" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="Phone" class="form-label fw-semibold">Số điện thoại</label>
+                                <input asp-for="Phone" class="form-control" />
+                                <span asp-validation-for="Phone" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Password" class="form-label fw-semibold">Mật khẩu tài khoản <span class="text-danger">*</span></label>
+                            <input asp-for="Password" type="text" class="form-control font-monospace" placeholder="Thay đổi mật khẩu..." />
+                            <span asp-validation-for="Password" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="Address" class="form-label fw-semibold">Địa chỉ thường trú</label>
+                            <textarea asp-for="Address" class="form-control" rows="3"></textarea>
+                            <span asp-validation-for="Address" class="text-danger small"></span>
+                        </div>
+
+                        <div class="border-top pt-3 d-flex gap-2 justify-content-end">
+                            <button type="submit" class="btn btn-warning px-4 fw-semibold shadow-sm font-monospace">
+                                <i class="bi bi-check-circle"></i> Cập nhật
+                            </button>
+                            <a asp-action="Index" class="btn btn-light px-3 font-monospace border">Hủy bỏ</a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

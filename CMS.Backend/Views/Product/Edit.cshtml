@@ -1,0 +1,108 @@
+﻿@model CMS.Data.Entities.Product
+
+@{
+    Layout = "_LayoutAdmin";
+    ViewData["Title"] = "Chỉnh sửa sản phẩm";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-success fw-bold m-0 text-uppercase" style="letter-spacing: 1px;">Chỉnh Sửa Sản Phẩm</h2>
+        <a asp-controller="Product" asp-action="Index" class="btn btn-outline-secondary btn-sm px-3 py-2 fw-semibold shadow-sm">
+            <i class="bi bi-arrow-left"></i> Quay lại danh sách
+        </a>
+    </div>
+
+    <div class="card shadow-sm border-0 rounded-3">
+        <div class="card-body p-4">
+            <form asp-controller="Product" asp-action="Edit" method="post" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+
+                <input type="hidden" asp-for="Id" />
+
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="mb-3">
+                            <label asp-for="Name" class="form-label fw-semibold text-dark">Tên sản phẩm <span class="text-danger">*</span></label>
+                            <input asp-for="Name" class="form-control" placeholder="Nhập tên sản phẩm..." />
+                            <span asp-validation-for="Name" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Description" class="form-label fw-semibold text-dark">Mô tả chi tiết</label>
+                            <textarea asp-for="Description" class="form-control" rows="6" placeholder="Nhập mô tả thông số chi tiết..."></textarea>
+                            <span asp-validation-for="Description" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4 border-start-md">
+                        <div class="mb-3">
+                            <label asp-for="CategoryProductId" class="form-label fw-semibold text-dark">Danh mục sản phẩm <span class="text-danger">*</span></label>
+                            <select asp-for="CategoryProductId" class="form-select" asp-items="ViewBag.CategoryList">
+                                <option value="">-- Chọn danh mục sản phẩm --</option>
+                            </select>
+                            <span asp-validation-for="CategoryProductId" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Price" class="form-label fw-semibold text-dark">Giá bán (đ) <span class="text-danger">*</span></label>
+                            <input asp-for="Price" type="number" class="form-control fw-bold text-danger" min="0" step="1000" />
+                            <span asp-validation-for="Price" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="StockQuantity" class="form-label fw-semibold text-dark">Số lượng tồn kho <span class="text-danger">*</span></label>
+                            <input asp-for="StockQuantity" type="number" class="form-control" min="0" />
+                            <span asp-validation-for="StockQuantity" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold text-dark">Hình ảnh sản phẩm</label>
+                            <input type="file" name="uploadImage" id="imageInput" class="form-control" accept="image/*" />
+
+                            <div class="mt-3 text-center p-2 border rounded bg-light" style="min-height: 120px;">
+                                @if (!string.IsNullOrEmpty(Model.ImageUrl))
+                                {
+                                    <img id="imagePreview" src="@Model.ImageUrl" alt="Hình ảnh sản phẩm" class="img-fluid rounded shadow-sm" style="max-height: 110px; object-fit: contain;" />
+                                    <div id="previewText" class="text-muted small pt-2 d-none"><i class="bi bi-image"></i><br>Ảnh mới sẽ hiển thị tại đây</div>
+                                }
+                                else
+                                {
+                                    <img id="imagePreview" src="#" alt="Xem trước hình ảnh" class="img-fluid rounded shadow-sm d-none" style="max-height: 110px; object-fit: contain;" />
+                                    <div id="previewText" class="text-muted small pt-4"><i class="bi bi-image" style="font-size: 1.5rem;"></i><br>Sản phẩm chưa có ảnh cũ</div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="border-top pt-3 mt-3 d-flex gap-2 justify-content-end">
+                    <button type="submit" class="btn btn-warning px-4 fw-semibold shadow-sm font-monospace">
+                        <i class="bi bi-check-circle"></i> Cập nhật sản phẩm
+                    </button>
+                    <a asp-controller="Product" asp-action="Index" class="btn btn-light px-3 font-monospace border">Hủy bỏ</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        document.getElementById('imageInput').addEventListener('change', function (e) {
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                document.getElementById('imagePreview').src = e.target.result;
+                document.getElementById('imagePreview').classList.remove('d-none');
+
+                var previewText = document.getElementById('previewText');
+                if(previewText) previewText.classList.add('d-none');
+            }
+            if (this.files[0]) {
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+    </script>
+}
