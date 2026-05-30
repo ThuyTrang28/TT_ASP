@@ -1,0 +1,87 @@
+﻿@model CMS.Data.Entities.Post
+
+@{
+    Layout = "_LayoutAdmin";
+    ViewData["Title"] = "Thêm bài viết mới";
+}
+
+<div class="container mt-4">
+    <div class="card shadow-sm border-0 rounded-3">
+        <div class="card-header bg-primary text-white py-3">
+            <h5 class="card-title m-0 fw-bold text-uppercase">
+                <i class="bi bi-file-earmark-plus-fill me-2"></i> THÊM BÀI VIẾT MỚI
+            </h5>
+        </div>
+
+        <div class="card-body p-4">
+            <form asp-action="Create" method="post" enctype="multipart/form-data">
+                <div class="row">
+                    <div class="col-md-8 border-end">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-secondary">Tiêu đề bài viết:</label>
+                            <input asp-for="Title" class="form-control form-control-lg" placeholder="Nhập tiêu đề..." required />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-secondary">Nội dung chi tiết:</label>
+                            <textarea asp-for="Content" id="Content" class="form-control" rows="10" placeholder="Viết nội dung tại đây..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4 ps-md-4">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-secondary">Chuyên mục:</label>
+                            <select asp-for="CategoryId" class="form-select border-2" asp-items="ViewBag.CategoryList">
+                                <option value="">-- Chọn danh mục --</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-secondary">Tải ảnh đại diện:</label>
+                            <input type="file" name="uploadImage" class="form-control border-2" accept="image/*" />
+                            <small class="text-muted">Định dạng hỗ trợ: JPG, PNG, GIF</small>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-secondary">Ngày đăng:</label>
+                            <input asp-for="CreatedDate" type="date" class="form-control border-2"
+                                   value="@DateTime.Now.ToString("yyyy-MM-dd")" />
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success py-2 fw-bold shadow-sm">
+                                <i class="bi bi-cloud-arrow-up-fill me-2"></i> Lưu và Đăng bài
+                            </button>
+
+                            <a asp-action="Index" class="btn btn-dark py-2 fw-bold shadow-sm">
+                                <i class="bi bi-arrow-left me-2"></i> Quay lại danh sách
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.ckeditor.com/ckeditor5/39.0.1/classic/ckeditor.js"></script>
+
+    <script>
+        // 2. Kích hoạt trình soạn thảo cho thẻ có id là 'Content'
+        ClassicEditor
+            .create(document.querySelector('#Content'))
+            .then(editor => {
+                console.log('CKEditor đã sẵn sàng!', editor);
+            })
+            .catch(error => {
+                console.error('Có lỗi xảy ra khi khởi tạo CKEditor:', error);
+            });
+    </script>
+
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

@@ -1,0 +1,65 @@
+﻿@model CMS.Data.Entities.User
+
+@{
+    Layout = "_LayoutAdmin";
+    ViewData["Title"] = "Cập nhật thông tin thành viên";
+}
+
+<div class="container mt-4">
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-warning text-dark py-3">
+            <h5 class="mb-0 fw-bold text-uppercase">
+                <i class="bi bi-person-gear me-2"></i> CẬP NHẬT THÔNG TIN THÀNH VIÊN
+            </h5>
+        </div>
+
+        <div class="card-body p-4">
+            <form asp-action="Edit" method="post">
+                <input type="hidden" asp-for="Id" />
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Tên đăng nhập:</label>
+                        <input asp-for="Username" class="form-control bg-light" readonly />
+                        <small class="text-danger italic">Tên đăng nhập không được phép sửa.</small>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Mật khẩu mới:</label>
+                        <input type="password" name="NewPassword" class="form-control" placeholder="Để trống nếu không muốn đổi" />
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Họ và tên:</label>
+                        <input asp-for="FullName" class="form-control" placeholder="Ví dụ: Trương Vô Kỵ" required />
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Vai trò:</label>
+                        <select asp-for="Role" class="form-select" required>
+                            <option value="Admin">Admin</option>
+                            <option value="Editor">Editor (Biên tập viên)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary px-4 fw-bold">
+                        Cập nhật
+                    </button>
+                    <a asp-action="Index" class="btn btn-secondary px-4 fw-bold">
+                        Quay lại
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

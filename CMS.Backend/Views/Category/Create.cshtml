@@ -1,0 +1,44 @@
+﻿@model CMS.Data.Entities.Category
+
+@{
+    ViewData["Title"] = "Thêm danh mục mới";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+
+            <div class="card shadow-sm border-0 rounded-3">
+                <div class="card-header bg-dark text-white py-3">
+                    <h4 class="card-title m-0 fw-bold text-uppercase text-center" style="letter-spacing: 0.5px;">
+                        Thêm Danh Mục Mới
+                    </h4>
+                </div>
+
+                <div class="card-body p-4">
+                    <form asp-action="Create" method="post">
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold text-secondary">Tên danh mục:</label>
+                            <input asp-for="Name" class="form-control form-control-lg" placeholder="Nhập tên danh mục (Ví dụ: Tin tức Công nghệ, Đời sống...)" required />
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold text-secondary">Mô tả:</label>
+                            <textarea asp-for="Description" class="form-control" rows="4" placeholder="Nhập mô tả chi tiết cho danh mục này..." required></textarea>
+                        </div>
+
+                        <hr class="text-muted my-4" />
+
+                        <div class="d-flex gap-2 justify-content-end">
+                            <a asp-action="Index" class="btn btn-secondary px-4 fw-semibold">Hủy bỏ</a>
+                            <button type="submit" class="btn btn-success px-4 fw-semibold shadow-sm">Lưu vào hệ thống</button>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

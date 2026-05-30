@@ -1,0 +1,75 @@
+﻿@model IEnumerable<CMS.Data.Entities.Category>
+
+@{
+    Layout = "_LayoutAdmin";
+    ViewData["Title"] = "Quản lý danh mục";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-success fw-bold m-0 text-uppercase" style="letter-spacing: 1px;">Quản Lý Danh Mục Bài Viết</h2>
+        <a asp-controller="Category" asp-action="Create" class="btn btn-success btn-sm px-3 py-2 fw-semibold shadow-sm">
+            <i class="bi bi-plus-lg"></i> Thêm danh mục mới
+        </a>
+    </div>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show shadow-sm border-start border-danger border-3" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show shadow-sm border-start border-success border-3" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    <div class="card shadow-sm border-0 rounded-3">
+        <div class="card-body p-0">
+            <table class="table table-hover table-striped align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th class="ps-4" style="width: 15%;">Mã ID</th>
+                        <th style="width: 25%;">Tên Danh Mục</th>
+                        <th style="width: 40%;">Mô Tả Chi Tiết</th>
+                        <th class="text-center pe-4" style="width: 20%;">Thao Tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Any())
+                    {
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td class="ps-4 fw-bold text-secondary">@item.Id</td>
+                                <td class="fw-semibold">
+                                    <a asp-controller="Post" asp-action="Index" asp-route-id="@item.Id" class="text-primary text-decoration-none-hover" title="Xem các bài viết thuộc danh mục này">
+                                        @item.Name
+                                    </a>
+                                </td>
+                                <td class="text-muted text-truncate" style="max-width: 300px;">@item.Description</td>
+                                <td class="text-center pe-4">
+                                    <a asp-controller="Post" asp-action="Index" asp-route-id="@item.Id" class="btn btn-outline-info btn-sm me-1 font-monospace" title="Xem bài viết">Xem</a>
+
+                                    <a asp-controller="Category" asp-action="Edit" asp-route-id="@item.Id" class="btn btn-outline-warning btn-sm me-1 font-monospace">Sửa</a>
+
+                                    <a asp-controller="Category" asp-action="Delete" asp-route-id="@item.Id" class="btn btn-outline-danger btn-sm font-monospace" onclick="return confirm('Bạn có chắc chắn muốn xóa danh mục này?')">Xóa</a>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="4" class="text-center text-muted py-3">Chưa có dữ liệu danh mục nào được tìm thấy.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
