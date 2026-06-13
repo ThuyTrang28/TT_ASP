@@ -1,103 +1,138 @@
 ﻿import { useState } from 'react';
+import { Routes, Route } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
+import Banner from './components/Banner';
+import Header from './components/Header';
+import Footer from './components/Footer';
 import CategoryMenu from './components/CategoryMenu';
 import ProductGrid from './components/ProductGrid';
 import LatestBlog from './components/LatestBlog';
 import ProductDetail from './pages/ProductDetail';
+import PostDetail from './pages/PostDetail';
 import Auth from './pages/Auth';
 import Checkout from './pages/Checkout';
+import Cart from './pages/Cart';
+import About from './pages/About';
+import PostList from './pages/PostList';
+import ProductPage from './pages/Product';
 
 function App() {
     const [selectedCategory, setSelectedCategory] = useState(null);
-    const [selectedProductId, setSelectedProductId] = useState(null);
-    const [currentUser, setCurrentUser] = useState(null);
+    const [searchQuery, setSearchQuery] = useState(""); // State tìm kiếm
+
+    // Quản lý người dùng
+    const [currentUser, setCurrentUser] = useState(() => {
+        const id = localStorage.getItem("customerId");
+        const name = localStorage.getItem("customerName");
+        const email = localStorage.getItem("customerEmail");
+        return id && id !== "undefined" ? { id, fullName: name, email: email } : null;
+    });
+
     const [cart, setCart] = useState([]);
 
+    const handleLogout = () => {
+        localStorage.clear();
+        setCurrentUser(null);
+        setCart([]);
+    };
+
     const handleAddToCart = (product) => {
-        setCart(prevCart => {
-            const existing = prevCart.find(item => item.id === product.id);
-            if (existing) {
-                return prevCart.map(item => item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item);
-            }
-            return [...prevCart, { ...product, quantity: 1 }];
+        setCart(prev => {
+            const exists = prev.find(i => i.id === product.id);
+            return exists
+                ? prev.map(i => i.id === product.id ? { ...i, quantity: i.quantity + 1 } : i)
+                : [...prev, { ...product, quantity: 1 }];
         });
+    };
+
+    const handleUpdateQuantity = (id, delta) => {
+        setCart(prev => prev.map(item =>
+            item.id === id ? { ...item, quantity: Math.max(1, item.quantity + delta) } : item
+        ));
+    };
+
+    const handleRemoveItem = (id) => {
+        setCart(prev => prev.filter(item => item.id !== id));
     };
 
     return (
         <div className="d-flex flex-column min-vh-100 bg-white">
-            <header className="bg-dark text-white py-3 sticky-top shadow">
-                <div className="container d-flex justify-content-between align-items-center">
-                    <h1 className="fs-5 fw-bold m-0 text-success text-uppercase font-monospace"
-                        style={{ cursor: 'pointer' }}
-                        onClick={() => setSelectedProductId(null)}>
-                        <i className="bi bi-bag-heart-fill me-2"></i>Fashion CMS Platform
-                    </h1>
-                    <span className="badge bg-success py-2 px-3 rounded-pill">
-                        <i className="bi bi-cart3 me-1"></i> Giỏ hàng ({cart.reduce((a, b) => a + b.quantity, 0)})
-                    </span>
-                </div>
-            </header>
+            <Header
+                cartCount={cart.reduce((a, b) => a + b.quantity, 0)}
+                currentUser={currentUser}
+                onLogout={handleLogout}
+                searchQuery={searchQuery}
+                onSearch={setSearchQuery} // Truyền hàm set xuống Header
+            />
 
-            {/* Chỉ hiển thị phần Đăng nhập/Đăng ký khi chưa đăng nhập */}
-            {!currentUser && (
-                <div className="container mt-4">
-                    <Auth
-                        currentUser={currentUser}
-                        onAuthSuccess={(user) => setCurrentUser(user)}
-                        onLogout={() => setCurrentUser(null)}
-                    />
-                </div>
-            )}
-
-            {/* Điều hướng hiển thị: Trang chủ hoặc Chi tiết sản phẩm */}
             <main className="flex-grow-1">
-                {!selectedProductId ? (
-                    <>
-                        <CategoryMenu onSelectCategory={setSelectedCategory} activeCategory={selectedCategory} />
-                        <div className="container my-4">
+                <Routes>
+                    <Route path="/" element={
+                        <div className="container-fluid p-0">
+                            <Banner />
+                            {!currentUser && (
+                                <div className="mb-4">
+                                    <Auth
+                                        onAuthSuccess={(user) => setCurrentUser(user)}
+                                        onLogout={handleLogout}
+                                        currentUser={currentUser}
+                                    />
+                                </div>
+                            )}
+
+                            <CategoryMenu onSelectCategory={setSelectedCategory} activeCategory={selectedCategory} />
+
+                            {/* CẬP NHẬT: Thêm limit={4} để chỉ hiện 4 sản phẩm mới nhất ở trang chủ */}
+                            <h4 className="fw-bold mt-4 mb-3">Sản phẩm mới nhất</h4>
                             <ProductGrid
+                                limit={4}
                                 categoryId={selectedCategory}
-                                onSelectProduct={setSelectedProductId}
+                                searchQuery={searchQuery}
                                 onAddToCart={handleAddToCart}
                             />
+
+                            {/* Thêm nút xem thêm */}
+                            <div className="text-center mt-3">
+                                <a href="/products" className="btn btn-outline-success">Xem tất cả sản phẩm</a>
+                            </div>
+
+                            <div className="mt-5">
+                                <LatestBlog currentUser={currentUser} />
+                            </div>
                         </div>
-                    </>
-                ) : (
-                    <div className="container my-4">
-                        <ProductDetail
-                            productId={selectedProductId}
-                            onBack={() => setSelectedProductId(null)}
-                            onAddToCart={handleAddToCart}
+                    } />
+                    {/* Trang danh sách sản phẩm */}
+                    <Route path="/products" element={<ProductPage />} />
+
+                    <Route path="/cart" element={
+                        <Cart
+                            cartItems={cart}
+                            onUpdateQuantity={handleUpdateQuantity}
+                            onRemove={handleRemoveItem}
+                            onClearCart={() => setCart([])}
                         />
-                    </div>
-                )}
+                    } />
+
+                    <Route path="/checkout" element={
+                        <div className="container my-5">
+                            <Checkout
+                                cartItems={cart}
+                                onClearCart={() => setCart([])}
+                                currentUser={currentUser}
+                            />
+                        </div>
+                    } />
+
+                    <Route path="/product/:id" element={<ProductDetail onAddToCart={handleAddToCart} />} />
+                    <Route path="/post/:id" element={<PostDetail />} />
+                    <Route path="/about" element={<About />} />
+                    <Route path="/post" element={<PostList />} />
+                    <Route path="/login" element={<Auth />} />
+                </Routes>
             </main>
-
-            {/* Chỉ hiển thị Checkout khi giỏ hàng có sản phẩm */}
-            {cart.length > 0 && (
-                <div className="container mb-5 p-4 border rounded shadow-sm">
-                    <h3 className="mb-3">Giỏ hàng của bạn</h3>
-                    <Checkout
-                        cartItems={cart}
-                        onClearCart={() => setCart([])}
-                        currentUser={currentUser}
-                    />
-                </div>
-            )}
-
-            {/* Hiển thị blog */}
-            <div className="container my-4">
-                <LatestBlog currentUser={currentUser} />
-            </div>
-
-            <footer className="bg-dark text-white-50 text-center py-4 mt-auto small">
-                <div className="container">
-                    <p className="mb-1 fw-bold text-light">TRƯỜNG CAO ĐẲNG CÔNG THƯƠNG TP.HCM</p>
-                    <p className="m-0 text-secondary font-monospace">Sinh viên: Lê Nguyễn Thùy Trang | MSSV: 2123110130</p>
-                </div>
-            </footer>
+            <Footer />
         </div>
     );
 }
