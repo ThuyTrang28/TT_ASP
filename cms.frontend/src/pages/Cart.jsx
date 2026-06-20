@@ -18,7 +18,7 @@ const Cart = ({ cartItems, onUpdateQuantity, onRemove, onClearCart }) => {
         return (
             <div className="text-center py-5">
                 <h3>Giỏ hàng của bạn đang trống</h3>
-                <button className="btn btn-success mt-3" onClick={() => navigate('/')}>Tiếp tục mua sắm</button>
+                <button className="btn btn-success mt-3" onClick={() => navigate('/products')}>Tiếp tục mua sắm</button>
             </div>
         );
     }

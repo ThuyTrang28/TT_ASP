@@ -1,4 +1,5 @@
-﻿function Footer() {
+﻿import { Link } from 'react-router-dom';
+function Footer() {
     // Định nghĩa màu nền xanh pastel nhẹ nhàng
     const footerStyle = {
         backgroundColor: '#e8f5e9', // Màu xanh lá pastel rất nhạt
@@ -27,11 +28,18 @@
                     <div className="col-md-3">
                         <h5 className="fw-bold mb-3 text-success">CHĂM SÓC KHÁCH HÀNG</h5>
                         <ul className="list-unstyled small text-muted">
-                            <li className="mb-2">Chính sách đổi trả</li>
-                            <li className="mb-2">Chính sách bảo mật</li>
-                            <li className="mb-2">Chính sách thanh toán</li>
-                            <li className="mb-2">Điều khoản dịch vụ</li>
-                            <li>Hóa đơn GTGT</li>
+                            <li className="mb-2">
+                                <Link to="/policy/doi-tra" className="text-decoration-none text-muted">Chính sách đổi trả</Link>
+                            </li>
+                            <li className="mb-2">
+                                <Link to="/policy/bao-mat" className="text-decoration-none text-muted">Chính sách bảo mật</Link>
+                            </li>
+                            <li className="mb-2">
+                                <Link to="/policy/thanh-toan" className="text-decoration-none text-muted">Chính sách thanh toán</Link>
+                            </li>
+                            <li className="mb-2">
+                                <Link to="/policy/dieu-khoan" className="text-decoration-none text-muted">Điều khoản dịch vụ</Link>
+                            </li>
                         </ul>
                     </div>
 

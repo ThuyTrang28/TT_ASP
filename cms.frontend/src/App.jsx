@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
@@ -17,10 +17,14 @@ import Cart from './pages/Cart';
 import About from './pages/About';
 import PostList from './pages/PostList';
 import ProductPage from './pages/Product';
+import PolicyPage from './pages/Policy';
+
+import productApi from './api/productApi'; // Import API để lấy dữ liệu
 
 function App() {
     const [selectedCategory, setSelectedCategory] = useState(null);
-    const [searchQuery, setSearchQuery] = useState(""); // State tìm kiếm
+    const [searchQuery, setSearchQuery] = useState("");
+    const [newProducts, setNewProducts] = useState([]); // State lưu sản phẩm mới
 
     // Quản lý người dùng
     const [currentUser, setCurrentUser] = useState(() => {
@@ -31,6 +35,21 @@ function App() {
     });
 
     const [cart, setCart] = useState([]);
+
+    // Gọi API lấy 4 sản phẩm mới nhất khi ứng dụng khởi chạy
+    useEffect(() => {
+        // Nếu chọn danh mục, gọi API theo danh mục, nếu không thì lấy tất cả
+        if (selectedCategory) {
+            productApi.getByCategory(selectedCategory)
+                .then(res => setNewProducts(res.data || res))
+                .catch(err => console.error("Lỗi lấy sản phẩm theo danh mục:", err));
+        } else {
+            // Mặc định load sản phẩm mới nhất hoặc tất cả
+            productApi.getLatestProducts(4)
+                .then(res => setNewProducts(res.data || res))
+                .catch(err => console.error("Lỗi lấy tất cả sản phẩm:", err));
+        }
+    }, [selectedCategory]);
 
     const handleLogout = () => {
         localStorage.clear();
@@ -64,7 +83,7 @@ function App() {
                 currentUser={currentUser}
                 onLogout={handleLogout}
                 searchQuery={searchQuery}
-                onSearch={setSearchQuery} // Truyền hàm set xuống Header
+                onSearch={setSearchQuery}
             />
 
             <main className="flex-grow-1">
@@ -84,16 +103,15 @@ function App() {
 
                             <CategoryMenu onSelectCategory={setSelectedCategory} activeCategory={selectedCategory} />
 
-                            {/* CẬP NHẬT: Thêm limit={4} để chỉ hiện 4 sản phẩm mới nhất ở trang chủ */}
                             <h4 className="fw-bold mt-4 mb-3">Sản phẩm mới nhất</h4>
                             <ProductGrid
+                                products={newProducts} // Truyền dữ liệu mới nhất đã lấy từ API
                                 limit={4}
                                 categoryId={selectedCategory}
                                 searchQuery={searchQuery}
                                 onAddToCart={handleAddToCart}
                             />
 
-                            {/* Thêm nút xem thêm */}
                             <div className="text-center mt-3">
                                 <a href="/products" className="btn btn-outline-success">Xem tất cả sản phẩm</a>
                             </div>
@@ -103,7 +121,7 @@ function App() {
                             </div>
                         </div>
                     } />
-                    {/* Trang danh sách sản phẩm */}
+
                     <Route path="/products" element={<ProductPage />} />
 
                     <Route path="/cart" element={
@@ -130,6 +148,7 @@ function App() {
                     <Route path="/about" element={<About />} />
                     <Route path="/post" element={<PostList />} />
                     <Route path="/login" element={<Auth />} />
+                    <Route path="/policy/:slug" element={<PolicyPage />} />
                 </Routes>
             </main>
             <Footer />

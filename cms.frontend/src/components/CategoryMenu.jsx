@@ -22,7 +22,7 @@ function CategoryMenu({ onSelectCategory, activeCategory }) {
         <div className="bg-light py-3 border-bottom shadow-sm">
             <div className="container d-flex align-items-center gap-3">
                 <span className="fw-bold text-success text-uppercase small">
-                    <i className="bi bi-funnel-fill me-1"></i> Bộ lọc:
+                    <i className="bi bi-funnel-fill me-1"></i> Danh mục:
                 </span>
 
                 <button

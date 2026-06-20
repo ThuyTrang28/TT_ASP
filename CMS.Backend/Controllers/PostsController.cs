@@ -38,7 +38,27 @@ namespace CMS.Backend.Controllers
                     p.Title,
                     p.ImageUrl,
                     p.CreatedDate,
+                    p.CategoryId,
                     CategoryName = p.Category != null ? p.Category.Name : "Không có danh mục"
+                })
+                .ToList();
+
+            return Ok(posts);
+        }
+
+        // 1.1 API: Lấy danh sách bài viết mới nhất (ví dụ: lấy 3 bài viết mới nhất)
+        // GET: api/Posts/latest/{count}
+        [HttpGet("latest/{count}")]
+        public IActionResult GetLatestPosts(int count)
+        {
+            var posts = _context.Posts
+                .OrderByDescending(p => p.CreatedDate) // Sắp xếp theo ngày tạo mới nhất
+                .Take(count)                          // Lấy số lượng theo yêu cầu
+                .Select(p => new {
+                    p.Id,
+                    p.Title,
+                    p.ImageUrl,
+                    p.CreatedDate
                 })
                 .ToList();
 
@@ -57,7 +77,9 @@ namespace CMS.Backend.Controllers
                     p.Id,
                     p.Title,
                     p.ImageUrl,
-                    p.CreatedDate
+                    p.CreatedDate,
+                    // Thêm trường CategoryName để đồng bộ giao diện
+                    CategoryName = p.Category != null ? p.Category.Name : "Không có danh mục"
                 })
                 .ToList();
 

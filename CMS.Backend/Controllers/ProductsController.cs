@@ -48,6 +48,64 @@ namespace CMS.Backend.Controllers
             return Ok(products);
         }
 
+        // GET: api/Products/pagination?page=1&pageSize=8
+        [HttpGet("pagination")]
+        public IActionResult GetProductsPagination(int page = 1, int pageSize = 8)
+        {
+            // Đảm bảo giá trị page và pageSize hợp lệ
+            if (page < 1) page = 1;
+            if (pageSize < 1) pageSize = 8;
+
+            // Tính tổng số sản phẩm để trả về cho Frontend biết có bao nhiêu trang
+            var totalProducts = _context.Products.Count();
+            var totalPages = (int)Math.Ceiling(totalProducts / (double)pageSize);
+
+            // Lấy dữ liệu phân trang
+            var products = _context.Products
+                .Include(p => p.CategoryProduct)
+                .OrderByDescending(p => p.Id)
+                .Skip((page - 1) * pageSize) // Bỏ qua các sản phẩm của trang trước
+                .Take(pageSize)              // Lấy số lượng sản phẩm của trang hiện tại
+                .Select(p => new {
+                    p.Id,
+                    p.Name,
+                    p.Price,
+                    p.ImageUrl,
+                    CategoryName = p.CategoryProduct != null ? p.CategoryProduct.Name : "Không có danh mục"
+                })
+                .ToList();
+
+            // Trả về một đối tượng bao gồm danh sách sản phẩm và thông tin phân trang
+            return Ok(new
+            {
+                TotalCount = totalProducts,
+                TotalPages = totalPages,
+                CurrentPage = page,
+                PageSize = pageSize,
+                Data = products
+            });
+        }
+
+        // 1.1 API: Lấy danh sách sản phẩm mới nhất (ví dụ: lấy 4 sản phẩm mới nhất)
+        // GET: api/Products/latest/{count}
+        [HttpGet("latest/{count}")]
+        public IActionResult GetLatestProducts(int count)
+        {
+            var products = _context.Products
+                .Include(p => p.CategoryProduct)
+                .OrderByDescending(p => p.Id) // Sắp xếp theo ID giảm dần (ID lớn nhất là mới nhất)
+                .Take(count)                 // Lấy số lượng theo yêu cầu
+                .Select(p => new {
+                    p.Id,
+                    p.Name,
+                    p.Price,
+                    p.ImageUrl,
+                    CategoryName = p.CategoryProduct != null ? p.CategoryProduct.Name : "Không có danh mục"
+                })
+                .ToList();
+
+            return Ok(products);
+        }
         // 2. API: Lấy danh sách sản phẩm theo Danh mục sản phẩm
         // GET: api/Products/category/{categoryId}
         [HttpGet("category/{categoryId}")]

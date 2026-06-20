@@ -4,7 +4,8 @@ import productApi from '../api/productApi';
 
 const BASE_URL = 'https://localhost:7064';
 
-const ProductGrid = ({ categoryId, searchQuery, onAddToCart, limit }) => {
+// Thêm prop 'products' vào để nhận dữ liệu từ App.jsx
+const ProductGrid = ({ categoryId, searchQuery, onAddToCart, limit, products: propProducts }) => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
@@ -22,6 +23,14 @@ const ProductGrid = ({ categoryId, searchQuery, onAddToCart, limit }) => {
     };
 
     useEffect(() => {
+        // 1. Nếu có dữ liệu từ App.jsx, ưu tiên dùng nó
+        if (propProducts && propProducts.length > 0) {
+            setProducts(propProducts);
+            setLoading(false);
+            return;
+        }
+
+        // 2. Nếu không có dữ liệu truyền vào, tự gọi API
         const fetchProducts = async () => {
             setLoading(true);
             try {
@@ -29,25 +38,32 @@ const ProductGrid = ({ categoryId, searchQuery, onAddToCart, limit }) => {
                 if (categoryId) {
                     res = await productApi.getByCategory(categoryId);
                 } else {
+                    // Giữ nguyên logic lấy sản phẩm (mặc định lấy tất cả hoặc mới nhất)
                     res = await productApi.getAll();
                 }
-                const data = res?.data || res;
 
-                // Sắp xếp sản phẩm theo ngày tạo mới nhất lên đầu
-                // Giả sử API trả về trường 'createdDate'
-                const sortedData = [...data].sort((a, b) => new Date(b.createdDate) - new Date(a.createdDate));
+                const data = res?.data || res || [];
+
+                // Sắp xếp sản phẩm theo ngày tạo mới nhất
+                const sortedData = [...data].sort((a, b) =>
+                    new Date(b.createdDate || 0) - new Date(a.createdDate || 0)
+                );
+
                 setProducts(sortedData);
             } catch (error) {
-                console.error("Lỗi tải sản phẩm:", error);
+                // Xử lý lỗi an toàn để tránh cảnh báo kiểu dữ liệu
+                const errMessage = error instanceof Error ? error.message : "Lỗi không xác định";
+                console.error("Lỗi tải sản phẩm:", errMessage);
                 setProducts([]);
             } finally {
                 setLoading(false);
             }
         };
-        fetchProducts();
-    }, [categoryId]);
 
-    // Lọc theo tìm kiếm
+        fetchProducts();
+    }, [categoryId, propProducts]);
+
+    // Lọc theo tìm kiếm và limit
     const filteredProducts = products
         .filter(product => (product.name || "").toLowerCase().includes((searchQuery || "").toLowerCase()))
         .slice(0, limit || products.length);
@@ -61,7 +77,7 @@ const ProductGrid = ({ categoryId, searchQuery, onAddToCart, limit }) => {
                     <div key={product.id} className="col-lg-3 col-md-4 col-sm-6">
                         <div className="card h-100 border-0 shadow-sm rounded-4 overflow-hidden position-relative">
 
-                            {/* Logic: Chỉ hiển thị nhãn New cho 4 sản phẩm đầu tiên trong danh sách đã sắp xếp */}
+                            {/* Nhãn "New" hiển thị cho 4 sản phẩm đầu tiên */}
                             {index < 4 && (
                                 <span className="badge bg-success position-absolute top-0 end-0 m-3" style={{ zIndex: 1 }}>New</span>
                             )}

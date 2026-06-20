@@ -2,24 +2,27 @@
 
 const productApi = {
     // 1. Nhóm API Danh mục & Bài viết
-    getCategories: () => axiosClient.get('/CategoryProducts'),
-    getLatestPosts: () => axiosClient.get('/Posts'),
+    getAllPosts: () => axiosClient.get('/Posts'),
+    getLatestPosts: (count) => axiosClient.get(`/Posts/latest/${count}`),
     getPostDetail: (id) => axiosClient.get(`/Posts/${id}`),
+    getPostCategories: () => axiosClient.get('/Categories'),
+    getPostsByCategory: (categoryId) => axiosClient.get(`/Posts/category/${categoryId}`), 
 
     // 2. Nhóm API Sản Phẩm
     getAll: () => axiosClient.get('/Products'),
+    getCategories: () => axiosClient.get('/CategoryProducts'),
     getByCategory: (categoryId) => axiosClient.get(`/Products/category/${categoryId}`),
-    // Cập nhật tên hàm thành getProductDetail để khớp với ProductDetail.jsx
     getProductDetail: (id) => axiosClient.get(`/Products/${id}`),
+    getLatestProducts: (count) => axiosClient.get(`/Products/latest/${count}`),
+    getProductsByPage: (page, pageSize) =>
+        axiosClient.get(`/Products/pagination?page=${page}&pageSize=${pageSize}`),
 
-    // 3. Nhóm API Tài Khoản Khách Hàng
-    // Cập nhật tên hàm thành registerCustomer và loginCustomer để khớp với Auth.jsx
+    // 3. Nhóm API Tài Khoản
     registerCustomer: (data) => axiosClient.post('/Auth/CustomerRegister', data),
     loginCustomer: (data) => axiosClient.post('/Auth/CustomerLogin', data),
 
     // 4. Nhóm API Đơn Hàng
     createOrder: (orderData) => axiosClient.post('/Orders', orderData),
-    // Cập nhật thành getOrderHistory để khớp với LatestBlog.jsx
     getOrderHistory: (customerId) => axiosClient.get(`/Orders/customer/${customerId}`)
 };
 

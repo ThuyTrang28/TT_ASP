@@ -1,34 +1,36 @@
 ﻿import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import productApi from '../api/productApi';
+import productApi from '../api/productApi'; // Đảm bảo import đúng file chứa hàm API
 
 const BASE_URL = 'https://localhost:7064';
 
-function LatestBlog() { // Đã bỏ currentUser vì không còn dùng tới
+function LatestBlog() {
     const [posts, setPosts] = useState([]);
     const navigate = useNavigate();
 
     const getImageUrl = (path) => {
         if (!path) return '/placeholder-image.jpg';
         if (path.startsWith('http')) return path;
-        const cleanPath = path.replace(/^\\+|\\+/g, '/');
+        const cleanPath = path.replace(/\\/g, '/'); // Đã tối ưu regex
         return `${BASE_URL}/${cleanPath}`;
     };
 
-    // Load bài viết
+    // Load 3 bài viết mới nhất từ API
     useEffect(() => {
-        productApi.getLatestPosts()
+        productApi.getLatestPosts(3)
             .then(res => {
-                const data = Array.isArray(res) ? res : (res?.data || []);
-                setPosts(data.slice(3,6));
+                const data = res?.data || res || [];
+                setPosts(data);
             })
-            .catch(err => console.error("Lỗi lấy bài viết:", err));
+            .catch(err => {
+                console.error("Lỗi lấy bài viết:", err);
+                setPosts([]);
+            });
     }, []);
 
     return (
         <div className="bg-light py-5 border-top">
             <div className="container">
-                {/* Danh sách bài viết */}
                 <h4 className="fw-bold text-center text-uppercase mb-4">
                     <i className="bi bi-journal-text text-success me-2"></i>Xu Hướng Làm Đẹp Mới Nhất
                 </h4>
@@ -46,7 +48,10 @@ function LatestBlog() { // Đã bỏ currentUser vì không còn dùng tới
                                     />
                                     <div className="card-body">
                                         <h5 className="card-title fw-bold text-dark">{post.title}</h5>
-                                        <p className="card-text text-secondary small">{post.summary}</p>
+                                        {/* Hiển thị tóm tắt nếu có, nếu không lấy một phần của content */}
+                                        <p className="card-text text-secondary small">
+                                            {post.summary || "Xem ngay để cập nhật những xu hướng làm đẹp mới nhất..."}
+                                        </p>
                                         <div className="d-flex justify-content-between align-items-center mt-3">
                                             <small className="text-muted font-monospace">
                                                 {post.createdDate ? new Date(post.createdDate).toLocaleDateString('vi-VN') : ''}
@@ -63,7 +68,7 @@ function LatestBlog() { // Đã bỏ currentUser vì không còn dùng tới
                             </div>
                         ))
                     ) : (
-                        <p className="text-center text-muted">Đang tải bài viết...</p>
+                        <p className="text-center text-muted">Hiện chưa có bài viết mới nào.</p>
                     )}
                 </div>
             </div>
