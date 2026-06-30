@@ -209,5 +209,45 @@ namespace CMS.Backend.Controllers
                 return StatusCode(500, new { message = "Lỗi hệ thống khi xóa bài viết", error = ex.Message });
             }
         }
+
+        // 7. API: Lấy danh sách bài viết theo phân trang
+        // GET: api/Posts/paged?page=1&pageSize=10
+        [HttpGet("paged")]
+        public IActionResult GetPaged([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+        {
+            // Đảm bảo số trang và kích thước không nhỏ hơn 1
+            if (page < 1) page = 1;
+            if (pageSize < 1) pageSize = 10;
+
+            // Đếm tổng số bài viết
+            var totalPosts = _context.Posts.Count();
+
+            // Tính toán tổng số trang
+            var totalPages = (int)Math.Ceiling(totalPosts / (double)pageSize);
+
+            // Lấy dữ liệu của trang hiện tại
+            var posts = _context.Posts
+                .OrderByDescending(p => p.CreatedDate)
+                .Skip((page - 1) * pageSize) // Bỏ qua các bài viết của trang trước
+                .Take(pageSize)              // Lấy số lượng bài viết của trang này
+                .Select(p => new {
+                    p.Id,
+                    p.Title,
+                    p.ImageUrl,
+                    p.CreatedDate,
+                    CategoryName = p.Category != null ? p.Category.Name : "Không có danh mục"
+                })
+                .ToList();
+
+            // Trả về kết quả kèm thông tin meta để FE biết cách hiển thị
+            return Ok(new
+            {
+                TotalPosts = totalPosts,
+                TotalPages = totalPages,
+                CurrentPage = page,
+                PageSize = pageSize,
+                Data = posts
+            });
+        }
     }
 }

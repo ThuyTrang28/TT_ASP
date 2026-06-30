@@ -42,8 +42,29 @@
                     <h1 class="h2 fw-bold text-dark mb-3">@Model.Name</h1>
 
                     <div class="p-3 bg-light rounded-3 mb-4 border-start border-danger border-4">
-                        <small class="text-muted d-block text-uppercase fw-semibold">Giá bán hiện tại</small>
-                        <span class="text-danger fw-bold fs-3">@Model.Price.ToString("#,##0") đ</span>
+                        <small class="text-muted d-block text-uppercase fw-semibold">
+                            @(Model.IsOnSale ? "Giá khuyến mãi" : "Giá bán hiện tại")
+                        </small>
+
+                        @if (Model.IsOnSale)
+                        {
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="text-danger fw-bold fs-2">@Model.FinalPrice.ToString("#,##0") đ</span>
+                                <span class="text-decoration-line-through text-muted fs-5">@Model.Price.ToString("#,##0") đ</span>
+                            </div>
+                            @if (Model.DiscountPercentage.HasValue && Model.DiscountPercentage > 0)
+                            {
+                                <span class="badge bg-danger">Giảm @Model.DiscountPercentage%</span>
+                            }
+                            else if (Model.DiscountAmount.HasValue && Model.DiscountAmount > 0)
+                            {
+                                <span class="badge bg-warning text-dark">Giảm @Model.DiscountAmount.Value.ToString("#,##0")đ</span>
+                            }
+                        }
+                        else
+                        {
+                            <span class="text-danger fw-bold fs-3">@Model.Price.ToString("#,##0") đ</span>
+                        }
                     </div>
 
                     <div class="row g-3 mb-4">

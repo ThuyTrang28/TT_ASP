@@ -123,6 +123,42 @@ namespace CMS.Web.Controllers.Api
             return Ok(new { message = "Xóa thông tin khách hàng thành công!" });
         }
 
+        // 6. GET: api/Customers/Profile/5
+        [HttpGet("Profile/{id}")]
+        public async Task<ActionResult<Customer>> GetProfile(int id)
+        {
+            var customer = await _context.Customers.FindAsync(id);
+            if (customer == null)
+            {
+                return NotFound(new { message = "Không tìm thấy hồ sơ cá nhân." });
+            }
+            // Chỉ trả về các trường cần thiết, tránh lộ mật khẩu hoặc dữ liệu nhạy cảm
+            return Ok(new
+            {
+                customer.Id,
+                customer.FullName,
+                customer.Email,
+                customer.Phone,
+                customer.Address
+            });
+        }
+
+        // 7. PUT: api/Customers/UpdateProfile
+        [HttpPut("UpdateProfile")]
+        public async Task<IActionResult> UpdateProfile(Customer updatedCustomer)
+        {
+            var customer = await _context.Customers.FindAsync(updatedCustomer.Id);
+            if (customer == null) return NotFound();
+
+            // Cập nhật các trường cho phép sửa
+            customer.FullName = updatedCustomer.FullName;
+            customer.Phone = updatedCustomer.Phone;
+            customer.Address = updatedCustomer.Address;
+            // Không cho phép sửa Email hoặc Password ở đây nếu không có logic xác thực riêng
+
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Cập nhật thông tin cá nhân thành công!" });
+        }
         // Hàm bổ trợ kiểm tra nhanh sự tồn tại của ID
         private bool CustomerExists(int id)
         {

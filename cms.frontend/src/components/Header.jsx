@@ -1,18 +1,44 @@
-﻿import { useState } from 'react';
+﻿import { useState, useEffect } from 'react'; // <--- Thêm useEffect ở đây
 import { Link } from 'react-router-dom';
+import productApi from '../api/productApi'; // Đảm bảo đã import API của bạn
 
 function Header({ cartCount, onReset, onSearch }) {
-    // Lấy thông tin user từ localStorage để hiển thị
     const customerName = localStorage.getItem("customerName");
-    // State cho ô tìm kiếm
     const [searchTerm, setSearchTerm] = useState("");
+    const [suggestions, setSuggestions] = useState([]); // <--- Thêm state này
+
+    // Bổ sung logic lấy gợi ý
+    useEffect(() => {
+        const delayDebounce = setTimeout(() => {
+            if (searchTerm.trim().length > 1) {
+                productApi.getSuggestions(searchTerm)
+                    .then(res => {
+                        // Kiểm tra xem res nằm ở đâu: thường là res.data
+                        // Nếu res đã là mảng dữ liệu (do interceptor), thì dùng res
+                        const data = res.data || res;
+                        setSuggestions(Array.isArray(data) ? data : []);
+                    })
+                    .catch(err => {
+                        console.error("Lỗi gọi API:", err);
+                        setSuggestions([]);
+                    });
+            } else {
+                setSuggestions([]);
+            }
+        }, 300);
+        return () => clearTimeout(delayDebounce);
+    }, [searchTerm]);
 
     const handleLogout = () => {
         localStorage.removeItem("customerId");
         localStorage.removeItem("customerName");
         localStorage.removeItem("customerEmail");
-        alert("Bạn đã đăng xuất thành công!");
-        window.location.reload();
+
+        // PHẢI XÓA ĐÚNG KEY 'cartItems' ĐANG DÙNG TRONG APP.JS
+        localStorage.removeItem("cartItems");
+
+
+        window.location.href = "/";
     };
 
     const handleSearch = () => {
@@ -37,7 +63,7 @@ function Header({ cartCount, onReset, onSearch }) {
                 </h1>
 
                 {/* Thanh tìm kiếm */}
-                <div className="flex-grow-1 mx-4">
+                <div className="flex-grow-1 mx-4 position-relative"> {/* Thêm position-relative */}
                     <div className="input-group input-group-sm">
                         <input
                             type="text"
@@ -45,13 +71,35 @@ function Header({ cartCount, onReset, onSearch }) {
                             placeholder="Tìm kiếm sản phẩm..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            // Thay onKeyPress bằng onKeyDown
                             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                         />
                         <button className="btn btn-success" type="button" onClick={handleSearch}>
                             <i className="bi bi-search"></i>
                         </button>
                     </div>
+                    {/* Danh sách gợi ý - Đã thêm kiểm tra an toàn Array.isArray */}
+                    {Array.isArray(suggestions) && suggestions.length > 0 && (
+                        <ul className="list-group position-absolute w-100 shadow mt-1"
+                            style={{
+                                zIndex: 9999, // Tăng cao hơn nữa để đảm bảo không bị che
+                                top: '100%',
+                                left: 0,
+                                border: '1px solid #ccc' // Thêm border để thấy khung
+                            }}>
+                            {suggestions.map(item => (
+                                <li key={item.id}
+                                    className="list-group-item list-group-item-action"
+                                    style={{ cursor: 'pointer', backgroundColor: '#fff' }} // Đảm bảo nền màu trắng
+                                    onClick={() => {
+                                        setSearchTerm(item.name);
+                                        setSuggestions([]);
+                                        onSearch(item.name);
+                                    }}>
+                                    {item.name}
+                                </li>
+                            ))}
+                        </ul>
+                    )}
                 </div>
 
                 <div className="d-flex align-items-center gap-2">
@@ -61,7 +109,14 @@ function Header({ cartCount, onReset, onSearch }) {
 
                     {customerName ? (
                         <div className="d-flex align-items-center gap-2">
-                            <span className="text-success small fw-bold">Hi, {customerName}</span>
+                            <Link to="/order-history" className="text-decoration-none me-2">
+                                <span className="badge bg-success">
+                                    <i className="bi bi-box-seam me-1"></i>Đơn hàng
+                                </span>
+                            </Link>
+                            <Link to="/profile" className="text-success small fw-bold text-decoration-none border-bottom border-success">
+                                Hi, {customerName}
+                            </Link>
                             <button className="btn btn-outline-danger btn-sm" onClick={handleLogout}>
                                 Đăng xuất
                             </button>

@@ -58,10 +58,21 @@ function Footer() {
                     <div className="col-md-3">
                         <h5 className="fw-bold mb-3 text-success">VỀ TRANG CMS</h5>
                         <ul className="list-unstyled small text-muted">
-                            <li className="mb-2">Giới thiệu cửa hàng</li>
-                            <li className="mb-2">Liên hệ hợp tác</li>
-                            <li className="mb-2">Hệ thống cửa hàng</li>
-                            <li>Tuyển dụng</li>
+                            <li className="mb-2">
+                                <Link to="/about" className="text-decoration-none text-dark">
+                                    Giới thiệu cửa hàng
+                                </Link>
+                            </li>
+                            <li className="mb-2">
+                                <Link to="/about" className="text-decoration-none text-dark">
+                                    Liên hệ hợp tác
+                                </Link>
+                            </li>
+                            <li className="mb-2">
+                                <Link to="/about" className="text-decoration-none text-dark">
+                                    Hệ thống cửa hàng
+                                </Link>
+                            </li>
                         </ul>
                     </div>
                 </div>

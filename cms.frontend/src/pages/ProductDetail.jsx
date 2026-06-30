@@ -50,9 +50,22 @@ function ProductDetail({ onAddToCart }) {
                 <div className="col-md-7 d-flex flex-column justify-content-between py-2">
                     <div>
                         <h2 className="fw-bold text-dark">{product.name}</h2>
-                        <h3 className="text-danger font-monospace fw-bold my-3">
-                            {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price || 0)}
-                        </h3>
+                        <h4 className="fw-bold mb-3">
+                            {product.isOnSale ? (
+                                <>
+                                    <span className="text-success me-3">
+                                        {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.finalPrice)}
+                                    </span>
+                                    <span className="text-muted text-decoration-line-through fs-6">
+                                        {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price)}
+                                    </span>
+                                </>
+                            ) : (
+                                <span className="text-success">
+                                    {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price)}
+                                </span>
+                            )}
+                        </h4>
                         <hr />
                         <p className="text-secondary">{product.description || "Chưa có mô tả chi tiết cho sản phẩm này."}</p>
                     </div>

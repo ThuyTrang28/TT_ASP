@@ -44,8 +44,19 @@
 
                         <div class="mb-3">
                             <label asp-for="Price" class="form-label fw-semibold text-dark">Giá bán (đ) <span class="text-danger">*</span></label>
-                            <input asp-for="Price" type="number" class="form-control fw-bold text-danger" placeholder="Nhập giá tiền..." min="0" step="1000" />
+                            <input asp-for="Price" type="number" class="form-control fw-bold text-danger" placeholder="Nhập giá gốc..." min="0" step="1000" />
                             <span asp-validation-for="Price" class="text-danger small"></span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="DiscountAmount" class="form-label fw-semibold text-dark">Giảm tiền (đ)</label>
+                                <input asp-for="DiscountAmount" type="number" class="form-control text-success" placeholder="VNĐ" min="0" step="1000" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="DiscountPercentage" class="form-label fw-semibold text-dark">Giảm %</label>
+                                <input asp-for="DiscountPercentage" type="number" class="form-control text-primary" placeholder="0-100%" min="0" max="100" />
+                            </div>
                         </div>
 
                         <div class="mb-3">

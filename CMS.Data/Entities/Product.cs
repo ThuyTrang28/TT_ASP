@@ -1,17 +1,4 @@
-﻿/* Sinh viên: Lê Nguyễn Thùy Trang
- * MSSV: 2123110130
- * Lớp: CCQ2311D
- * Ngày tạo: 16/05/2026
- * Mô tả: Quản lý thực thể sản phẩm 
- */
-
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CMS.Data.Entities
@@ -30,15 +17,41 @@ namespace CMS.Data.Entities
         [Column(TypeName = "decimal(18,2)")]
         public decimal Price { get; set; }
 
+        // --- BỔ SUNG: Tính năng khuyến mãi đa dạng ---
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal? DiscountAmount { get; set; } // Giảm theo số tiền (VD: 50.000)
+
+        [Range(0, 100)]
+        public int? DiscountPercentage { get; set; } // Giảm theo % (VD: 10 cho 10%)
+
+        [NotMapped] // Tính toán giá cuối cùng để hiển thị
+        public decimal FinalPrice
+        {
+            get
+            {
+                if (DiscountPercentage.HasValue && DiscountPercentage > 0)
+                    return Price * (1 - (DiscountPercentage.Value / 100m));
+
+                if (DiscountAmount.HasValue && DiscountAmount > 0)
+                    return Price - DiscountAmount.Value;
+
+                return Price;
+            }
+        }
+
+        [NotMapped]
+        public bool IsOnSale => (DiscountPercentage.HasValue && DiscountPercentage > 0) ||
+                                (DiscountAmount.HasValue && DiscountAmount > 0);
+        // ---------------------------------------------
+
         public int StockQuantity { get; set; }
 
         public string? ImageUrl { get; set; }
 
-        // Khóa ngoại nối tới CategoryProduct
         public int CategoryProductId { get; set; }
 
         [ForeignKey("CategoryProductId")]
         public virtual CategoryProduct? CategoryProduct { get; set; }
     }
 }
-

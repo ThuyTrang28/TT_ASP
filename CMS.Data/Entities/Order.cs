@@ -29,10 +29,16 @@ namespace CMS.Data.Entities
 
         public string? Notes { get; set; }
 
+        // --- CÁC THUỘC TÍNH BỔ SUNG CHO THÔNG TIN GIAO HÀNG ---
+        public string ShippingName { get; set; } = string.Empty;
+        public string ShippingPhone { get; set; } = string.Empty;
+        public string ShippingAddress { get; set; } = string.Empty;
+        public string PaymentMethod { get; set; } = "COD";
+        // ------------------------------------------------------
+
         [ForeignKey("CustomerId")]
         public virtual Customer? Customer { get; set; }
 
-        public virtual ICollection<OrderDetail>? OrderDetails { get; set; }
+        public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
     }
 }
-

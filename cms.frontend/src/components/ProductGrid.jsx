@@ -5,7 +5,7 @@ import productApi from '../api/productApi';
 const BASE_URL = 'https://localhost:7064';
 
 // Thêm prop 'products' vào để nhận dữ liệu từ App.jsx
-const ProductGrid = ({ categoryId, searchQuery, onAddToCart, limit, products: propProducts }) => {
+const ProductGrid = ({ categoryId, searchQuery, onAddToCart, limit, products: propProducts, currentPage }) => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
@@ -23,7 +23,7 @@ const ProductGrid = ({ categoryId, searchQuery, onAddToCart, limit, products: pr
     };
 
     useEffect(() => {
-        // 1. Nếu có dữ liệu từ App.jsx, ưu tiên dùng nó
+        // 1. Nếu có dữ liệu truyền vào từ App.jsx, ưu tiên dùng nó
         if (propProducts && propProducts.length > 0) {
             setProducts(propProducts);
             setLoading(false);
@@ -35,25 +35,28 @@ const ProductGrid = ({ categoryId, searchQuery, onAddToCart, limit, products: pr
             setLoading(true);
             try {
                 let res;
+                // Nếu có chọn danh mục, vẫn dùng hàm cũ (hoặc bạn có thể nâng cấp thêm phân trang cho danh mục nếu cần)
                 if (categoryId) {
                     res = await productApi.getByCategory(categoryId);
                 } else {
-                    // Giữ nguyên logic lấy sản phẩm (mặc định lấy tất cả hoặc mới nhất)
-                    res = await productApi.getAll();
+                    // ĐÂY LÀ PHẦN CẬP NHẬT: Gọi API phân trang thay vì getAll
+                    // Mặc định pageSize = 8
+                    res = await productApi.getProductsByPage(currentPage || 1, 8);
                 }
 
-                const data = res?.data || res || [];
+                // Lưu ý: Cấu trúc res trả về từ API phân trang của bạn thường có dạng:
+                // { data: [...], totalPages: ... } hoặc trực tiếp là danh sách sản phẩm
+                // Kiểm tra kỹ log để lấy đúng nhánh data
+                const data = res?.data?.data || res?.data || res || [];
 
-                // Sắp xếp sản phẩm theo ngày tạo mới nhất
+                // Sắp xếp sản phẩm (nếu cần)
                 const sortedData = [...data].sort((a, b) =>
                     new Date(b.createdDate || 0) - new Date(a.createdDate || 0)
                 );
 
                 setProducts(sortedData);
             } catch (error) {
-                // Xử lý lỗi an toàn để tránh cảnh báo kiểu dữ liệu
-                const errMessage = error instanceof Error ? error.message : "Lỗi không xác định";
-                console.error("Lỗi tải sản phẩm:", errMessage);
+                console.error("Lỗi tải sản phẩm:", error instanceof Error ? error.message : "Lỗi");
                 setProducts([]);
             } finally {
                 setLoading(false);
@@ -61,7 +64,8 @@ const ProductGrid = ({ categoryId, searchQuery, onAddToCart, limit, products: pr
         };
 
         fetchProducts();
-    }, [categoryId, propProducts]);
+        // Bổ sung currentPage vào đây để nó tự load lại khi nhấn trang
+    }, [categoryId, propProducts, currentPage]);
 
     // Lọc theo tìm kiếm và limit
     const filteredProducts = products
@@ -77,10 +81,19 @@ const ProductGrid = ({ categoryId, searchQuery, onAddToCart, limit, products: pr
                     <div key={product.id} className="col-lg-3 col-md-4 col-sm-6">
                         <div className="card h-100 border-0 shadow-sm rounded-4 overflow-hidden position-relative">
 
-                            {/* Nhãn "New" hiển thị cho 4 sản phẩm đầu tiên */}
-                            {index < 4 && (
-                                <span className="badge bg-success position-absolute top-0 end-0 m-3" style={{ zIndex: 1 }}>New</span>
-                            )}
+                            <div className="position-absolute top-0 end-0 m-3" style={{ zIndex: 1 }}>
+                                {/* Hiển thị nhãn Sale nếu sản phẩm đang giảm giá */}
+                                {product.isOnSale && product.discountPercentage > 0 && (
+                                    <span className="badge bg-danger d-block mb-1">
+                                        -{product.discountPercentage}%
+                                    </span>
+                                )}
+
+                                {/* Nhãn "New" hiển thị cho 4 sản phẩm đầu tiên */}
+                                {index < 4 && (
+                                    <span className="badge bg-success d-block">New</span>
+                                )}
+                            </div>
 
                             <div className="p-3">
                                 <img
@@ -94,8 +107,24 @@ const ProductGrid = ({ categoryId, searchQuery, onAddToCart, limit, products: pr
 
                             <div className="card-body d-flex flex-column text-center pt-0">
                                 <h6 className="card-title fw-bold text-dark mb-2">{product.name}</h6>
-                                <p className="card-text fw-bold text-success mb-3">
-                                    {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price)}
+                                <p className="card-text fw-bold mb-3">
+                                    {product.isOnSale ? (
+                                        <>
+                                            {/* Giá sau giảm */}
+                                            <span className="text-success me-2">
+                                                {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.finalPrice)}
+                                            </span>
+                                            {/* Giá gốc gạch ngang */}
+                                            <span className="text-muted text-decoration-line-through small">
+                                                {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price)}
+                                            </span>
+                                        </>
+                                    ) : (
+                                        /* Nếu không giảm giá, chỉ hiện giá thường */
+                                        <span className="text-success">
+                                            {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price)}
+                                        </span>
+                                    )}
                                 </p>
 
                                 <div className="d-flex flex-column gap-2 mt-auto">

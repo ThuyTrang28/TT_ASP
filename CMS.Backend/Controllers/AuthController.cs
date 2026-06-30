@@ -102,6 +102,75 @@ namespace CMS.Backend.Controllers
                 message = "Đăng nhập thành công!"
             });
         }
+
+        // =========================================================================
+        // ● GET /api/Auth/CustomerProfile/{id}
+        // Nhiệm vụ: Lấy thông tin chi tiết của một khách hàng dựa trên ID
+        // =========================================================================
+        [HttpGet("CustomerProfile/{id}")]
+        public async Task<IActionResult> GetCustomerProfile(int id)
+        {
+            var customer = await _context.Customers.FindAsync(id);
+            if (customer == null)
+            {
+                return NotFound(new { success = false, message = "Không tìm thấy khách hàng." });
+            }
+
+            return Ok(new
+            {
+                success = true,
+                id = customer.Id,
+                fullName = customer.FullName,
+                email = customer.Email,
+                phone = customer.Phone,
+                address = customer.Address
+            });
+        }
+
+        // =========================================================================
+        // ● PUT /api/Auth/UpdateProfile
+        // Nhiệm vụ: Cập nhật thông tin FullName, Phone, Address của khách hàng
+        // =========================================================================
+        [HttpPut("UpdateProfile")]
+        public async Task<IActionResult> UpdateProfile([FromBody] CustomerUpdateDto model)
+        {
+            var customer = await _context.Customers.FindAsync(model.Id);
+            if (customer == null)
+            {
+                return NotFound(new { success = false, message = "Không tìm thấy khách hàng." });
+            }
+
+            customer.FullName = model.FullName;
+            customer.Phone = model.Phone;
+            customer.Address = model.Address;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+                return Ok(new { success = true, message = "Cập nhật thông tin thành công!" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = "Lỗi khi cập nhật.", error = ex.Message });
+            }
+        }
+
+        [HttpPut("ChangePassword")]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto model)
+        {
+            var customer = await _context.Customers.FindAsync(model.Id);
+            if (customer == null) return NotFound(new { message = "Không tìm thấy người dùng." });
+
+            // Kiểm tra mật khẩu cũ (Vì đề bài yêu cầu lưu thô, nên so sánh trực tiếp)
+            if (customer.Password != model.OldPassword)
+            {
+                return BadRequest(new { message = "Mật khẩu cũ không chính xác!" });
+            }
+
+            customer.Password = model.NewPassword;
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Đổi mật khẩu thành công!" });
+        }
     }
 
     // =========================================================================
@@ -120,5 +189,20 @@ namespace CMS.Backend.Controllers
     {
         public string Email { get; set; } = null!;
         public string Password { get; set; } = null!;
+    }
+
+    public class CustomerUpdateDto
+    {
+        public int Id { get; set; }
+        public string FullName { get; set; } = null!;
+        public string? Phone { get; set; }
+        public string? Address { get; set; }
+    }
+
+    public class ChangePasswordDto
+    {
+        public int Id { get; set; }
+        public string OldPassword { get; set; } = null!;
+        public string NewPassword { get; set; } = null!;
     }
 }

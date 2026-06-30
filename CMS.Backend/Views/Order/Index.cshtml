@@ -31,10 +31,11 @@
             <table class="table table-hover table-striped align-middle mb-0">
                 <thead class="table-dark">
                     <tr>
-                        <th class="ps-4" style="width: 12%;">Mã Đơn</th>
-                        <th style="width: 25%;">Khách Hàng</th>
-                        <th style="width: 23%;">Ngày Đặt</th>
-                        <th style="width: 20%;">Trạng Thái</th>
+                        <th class="ps-4" style="width: 10%;">ID</th>
+                        <th style="width: 25%;">Khách hàng</th>
+                        <th style="width: 20%;">Ngày đặt</th>
+                        <th style="width: 15%;">Thanh toán</th>
+                        <th style="width: 22%;">Trạng thái</th>
                         <th class="text-center pe-4" style="width: 20%;">Thao Tác</th>
                     </tr>
                 </thead>
@@ -44,32 +45,38 @@
                         @foreach (var item in Model)
                         {
                             <tr>
-                                <td class="ps-4 fw-bold text-secondary font-monospace">#@item.Id</td>
-                                <td class="fw-semibold text-dark">@(item.Customer != null ? item.Customer.FullName : "Khách vãng lai")</td>
-                                <td>@item.OrderDate.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td class="ps-4 fw-bold text-secondary">@item.Id</td>
+                                <td class="fw-semibold">@item.Customer?.FullName</td>
+                                <td class="text-muted">@item.OrderDate.ToString("dd/MM/yyyy HH:mm")</td>
                                 <td>
-                                    @if (item.Status == 0)
+                                    @if (item.PaymentMethod == "COD")
                                     {
-                                        <span class="badge bg-warning text-dark px-2 py-1"><i class="bi bi-clock-history"></i> Chờ duyệt</span>
-                                    }
-                                    else if (item.Status == 1)
-                                    {
-                                        <span class="badge bg-primary px-2 py-1"><i class="bi bi-truck"></i> Đang giao</span>
-                                    }
-                                    else if (item.Status == 2)
-                                    {
-                                        <span class="badge bg-success px-2 py-1"><i class="bi bi-check-circle"></i> Đã xong</span>
+                                        <span class="badge bg-warning text-dark">Chưa thanh toán</span>
                                     }
                                     else
                                     {
-                                        <span class="badge bg-secondary px-2 py-1">Đã hủy</span>
+                                        <span class="badge bg-success">Đã thanh toán</span>
                                     }
                                 </td>
-                                <td class="text-center pe-4">
-                                    <div class="btn-group">
-                                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-info btn-sm font-monospace">Xem đơn</a>
-                                        <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-outline-danger btn-sm font-monospace" onclick="return confirm('Bạn có chắc muốn xóa đơn hàng #@item.Id không?')">Xóa</a>
-                                    </div>
+                                <td>
+                                    <form asp-action="UpdateStatus" method="post" class="d-flex">
+                                        <input type="hidden" name="id" value="@item.Id" />
+                                        <select name="status" class="form-select form-select-sm me-2" style="max-width: 150px;">
+                                            <option value="0" selected="@(item.Status == 0)">Chờ duyệt</option>
+                                            <option value="1" selected="@(item.Status == 1)">Đang giao</option>
+                                            <option value="2" selected="@(item.Status == 2)">Đã xong</option>
+                                            <option value="3" selected="@(item.Status == 3)">Đã hủy</option>
+                                        </select>
+                                        <button type="submit" class="btn btn-outline-success btn-sm">Lưu</button>
+                                    </form>
+                                </td>
+                                <td class="text-center pe-4" style="white-space: nowrap;">
+                                    <a asp-action="Details" asp-route-id="@item.Id"
+                                       class="btn btn-outline-info btn-sm me-1">Chi tiết</a>
+
+                                    <a asp-action="Delete" asp-route-id="@item.Id"
+                                       class="btn btn-outline-danger btn-sm"
+                                       onclick="return confirm('Bạn có chắc chắn muốn xóa đơn hàng này?')">Xóa</a>
                                 </td>
                             </tr>
                         }
@@ -77,9 +84,7 @@
                     else
                     {
                         <tr>
-                            <td colspan="5" class="text-center text-muted py-5">
-                                <i class="bi bi-receipt fs-2 d-block mb-2"></i> Chưa có đơn đặt hàng nào trong hệ thống.
-                            </td>
+                            <td colspan="5" class="text-center text-muted py-3">Chưa có đơn hàng nào được tìm thấy.</td>
                         </tr>
                     }
                 </tbody>

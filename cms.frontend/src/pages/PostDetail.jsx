@@ -25,7 +25,7 @@ const PostDetail = () => {
     if (!post) return <div className="text-center mt-5">Không tìm thấy bài viết.</div>;
 
     return (
-        <div className="container my-5" style={{ maxWidth: '800px' }}>
+        <div className="container my-5" style={{ maxWidth: '1000px' }}>
             <button
                 className="btn btn-outline-success btn-sm mb-4 rounded-pill px-3"
                 onClick={() => navigate(-1)}

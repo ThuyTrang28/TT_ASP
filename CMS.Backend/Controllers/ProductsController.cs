@@ -37,8 +37,17 @@ namespace CMS.Backend.Controllers
                 .Select(p => new {
                     p.Id,
                     p.Name,
-                    p.Description,
+                    p.Description, // (Nếu hàm đó có dùng)
                     p.Price,
+                    // BỔ SUNG CÁC TRƯỜNG KHUYẾN MÃI MỚI
+                    p.DiscountAmount,
+                    p.DiscountPercentage,
+                    FinalPrice = (p.DiscountPercentage.HasValue && p.DiscountPercentage > 0)
+                 ? p.Price * (1 - (p.DiscountPercentage.Value / 100m))
+                 : (p.DiscountAmount.HasValue ? p.Price - p.DiscountAmount.Value : p.Price),
+                    IsOnSale = (p.DiscountPercentage.HasValue && p.DiscountPercentage > 0) ||
+               (p.DiscountAmount.HasValue && p.DiscountAmount > 0 && p.DiscountAmount < p.Price),
+                    // --------------------------------
                     p.StockQuantity,
                     p.ImageUrl,
                     CategoryName = p.CategoryProduct != null ? p.CategoryProduct.Name : "Không có danh mục"
@@ -52,30 +61,40 @@ namespace CMS.Backend.Controllers
         [HttpGet("pagination")]
         public IActionResult GetProductsPagination(int page = 1, int pageSize = 8)
         {
-            // Đảm bảo giá trị page và pageSize hợp lệ
+            // 1. Kiểm tra tham số đầu vào (Validation)
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 8;
 
-            // Tính tổng số sản phẩm để trả về cho Frontend biết có bao nhiêu trang
+            // 2. Lấy tổng số lượng sản phẩm (để Frontend tính số trang)
             var totalProducts = _context.Products.Count();
+
+            // 3. Tính toán số trang (Math.Ceiling làm tròn lên)
             var totalPages = (int)Math.Ceiling(totalProducts / (double)pageSize);
 
-            // Lấy dữ liệu phân trang
+            // 4. Lấy dữ liệu theo trang
             var products = _context.Products
                 .Include(p => p.CategoryProduct)
                 .OrderByDescending(p => p.Id)
-                .Skip((page - 1) * pageSize) // Bỏ qua các sản phẩm của trang trước
-                .Take(pageSize)              // Lấy số lượng sản phẩm của trang hiện tại
+                .Skip((page - 1) * pageSize) // Bỏ qua sản phẩm của các trang trước
+                .Take(pageSize)              // Lấy đúng số lượng của trang hiện tại
                 .Select(p => new {
                     p.Id,
                     p.Name,
                     p.Price,
                     p.ImageUrl,
+                    p.DiscountAmount,
+                    p.DiscountPercentage,
+                    // Tính toán giá cuối tại server để FE không phải tính lại
+                    FinalPrice = (p.DiscountPercentage.HasValue && p.DiscountPercentage > 0)
+                              ? p.Price * (1 - (p.DiscountPercentage.Value / 100m))
+                              : (p.DiscountAmount.HasValue ? p.Price - p.DiscountAmount.Value : p.Price),
+                    IsOnSale = (p.DiscountPercentage.HasValue && p.DiscountPercentage > 0) ||
+                               (p.DiscountAmount.HasValue && p.DiscountAmount > 0 && p.DiscountAmount < p.Price),
                     CategoryName = p.CategoryProduct != null ? p.CategoryProduct.Name : "Không có danh mục"
                 })
                 .ToList();
 
-            // Trả về một đối tượng bao gồm danh sách sản phẩm và thông tin phân trang
+            // 5. Trả về cấu trúc JSON chuẩn (Metadata + Data)
             return Ok(new
             {
                 TotalCount = totalProducts,
@@ -100,6 +119,13 @@ namespace CMS.Backend.Controllers
                     p.Name,
                     p.Price,
                     p.ImageUrl,
+                    p.DiscountAmount,
+                    p.DiscountPercentage,
+                    FinalPrice = (p.DiscountPercentage.HasValue && p.DiscountPercentage > 0)
+                 ? p.Price * (1 - (p.DiscountPercentage.Value / 100m))
+                 : (p.DiscountAmount.HasValue ? p.Price - p.DiscountAmount.Value : p.Price),
+                    IsOnSale = (p.DiscountPercentage.HasValue && p.DiscountPercentage > 0) ||
+               (p.DiscountAmount.HasValue && p.DiscountAmount > 0 && p.DiscountAmount < p.Price),
                     CategoryName = p.CategoryProduct != null ? p.CategoryProduct.Name : "Không có danh mục"
                 })
                 .ToList();
@@ -119,7 +145,14 @@ namespace CMS.Backend.Controllers
                     p.Name,
                     p.Price,
                     p.StockQuantity,
-                    p.ImageUrl
+                    p.ImageUrl,
+                    p.DiscountAmount,
+                    p.DiscountPercentage,
+                    FinalPrice = (p.DiscountPercentage.HasValue && p.DiscountPercentage > 0)
+                 ? p.Price * (1 - (p.DiscountPercentage.Value / 100m))
+                 : (p.DiscountAmount.HasValue ? p.Price - p.DiscountAmount.Value : p.Price),
+                    IsOnSale = (p.DiscountPercentage.HasValue && p.DiscountPercentage > 0) ||
+               (p.DiscountAmount.HasValue && p.DiscountAmount > 0 && p.DiscountAmount < p.Price)
                 })
                 .ToList();
 
@@ -140,6 +173,13 @@ namespace CMS.Backend.Controllers
                     p.Price,
                     p.StockQuantity,
                     p.ImageUrl,
+                    p.DiscountAmount,
+                    p.DiscountPercentage,
+                    FinalPrice = (p.DiscountPercentage.HasValue && p.DiscountPercentage > 0)
+                 ? p.Price * (1 - (p.DiscountPercentage.Value / 100m))
+                 : (p.DiscountAmount.HasValue ? p.Price - p.DiscountAmount.Value : p.Price),
+                    IsOnSale = (p.DiscountPercentage.HasValue && p.DiscountPercentage > 0) ||
+               (p.DiscountAmount.HasValue && p.DiscountAmount > 0 && p.DiscountAmount < p.Price),
                     CategoryName = p.CategoryProduct != null ? p.CategoryProduct.Name : "Không có danh mục"
                 })
                 .FirstOrDefault(p => p.Id == id);
@@ -171,8 +211,22 @@ namespace CMS.Backend.Controllers
                 _context.Products.Add(product);
                 _context.SaveChanges();
 
-                // Trả về mã trạng thái 201 Created kèm theo đường dẫn lấy chi tiết
-                return CreatedAtAction(nameof(GetDetail), new { id = product.Id }, product);
+                // Trả về đối tượng đã tính toán để Frontend cập nhật danh sách ngay
+                var result = new
+                {
+                    product.Id,
+                    product.Name,
+                    product.Price,
+                    product.DiscountAmount,
+                    product.DiscountPercentage,
+                    FinalPrice = (product.DiscountPercentage.HasValue && product.DiscountPercentage > 0)
+                                 ? product.Price * (1 - (product.DiscountPercentage.Value / 100m))
+                                 : (product.DiscountAmount.HasValue ? product.Price - product.DiscountAmount.Value : product.Price),
+                    IsOnSale = (product.DiscountPercentage.HasValue && product.DiscountPercentage > 0) ||
+                               (product.DiscountAmount.HasValue && product.DiscountAmount > 0 && product.DiscountAmount < product.Price)
+                };
+
+                return CreatedAtAction(nameof(GetDetail), new { id = product.Id }, result);
             }
             catch (Exception ex)
             {
@@ -206,7 +260,8 @@ namespace CMS.Backend.Controllers
                 existingProduct.StockQuantity = updatedProduct.StockQuantity;
                 existingProduct.ImageUrl = updatedProduct.ImageUrl;
                 existingProduct.CategoryProductId = updatedProduct.CategoryProductId;
-
+                existingProduct.DiscountAmount = updatedProduct.DiscountAmount;
+                existingProduct.DiscountPercentage = updatedProduct.DiscountPercentage;
                 _context.Products.Update(existingProduct);
                 _context.SaveChanges();
 
@@ -245,6 +300,71 @@ namespace CMS.Backend.Controllers
                     error = ex.Message
                 });
             }
+        }
+
+        // 7. API: Tìm kiếm sản phẩm theo từ khóa (Name hoặc Description)
+        // GET: api/Products/search?keyword=tên_sản_phẩm
+        [HttpGet("search")]
+        public IActionResult Search([FromQuery] string keyword)
+        {
+            // Nếu không có từ khóa, trả về danh sách trống hoặc tất cả (tùy nhu cầu)
+            if (string.IsNullOrWhiteSpace(keyword))
+            {
+                return Ok(new List<object>());
+            }
+
+            var products = _context.Products
+                .Include(p => p.CategoryProduct)
+                .Where(p =>
+                    p.Name.Contains(keyword) ||
+                    (p.Description != null && p.Description.Contains(keyword))
+                )
+                .OrderByDescending(p => p.Id)
+                .Select(p => new {
+                    p.Id,
+                    p.Name,
+                    p.Price,
+                    p.ImageUrl,
+                    p.DiscountAmount,
+                    p.DiscountPercentage,
+                    FinalPrice = (p.DiscountPercentage.HasValue && p.DiscountPercentage > 0)
+                 ? p.Price * (1 - (p.DiscountPercentage.Value / 100m))
+                 : (p.DiscountAmount.HasValue ? p.Price - p.DiscountAmount.Value : p.Price),
+                    IsOnSale = (p.DiscountPercentage.HasValue && p.DiscountPercentage > 0) ||
+               (p.DiscountAmount.HasValue && p.DiscountAmount > 0 && p.DiscountAmount < p.Price),
+                    CategoryName = p.CategoryProduct != null ? p.CategoryProduct.Name : "Không có danh mục"
+                })
+                .ToList();
+
+            return Ok(products);
+        }
+
+        // 8. API: Lấy gợi ý tìm kiếm (chỉ lấy tên để hiển thị nhanh)
+        // GET: api/Products/suggestions?keyword=abc
+        [HttpGet("suggestions")]
+        public IActionResult GetSuggestions([FromQuery] string keyword)
+        {
+            // Kiểm tra xem keyword có nhận được không
+            if (string.IsNullOrWhiteSpace(keyword)) return Ok(new List<object>());
+
+            var data = _context.Products
+                .Where(p => p.Name.Contains(keyword))
+                .Take(5)
+                .Select(p => new {
+                    p.Id,
+                    p.Name,
+                    p.Price,
+                    // Thêm giá sau giảm nếu cần hiển thị trong dropdown gợi ý
+                    FinalPrice = (p.DiscountPercentage.HasValue && p.DiscountPercentage > 0)
+                         ? p.Price * (1 - (p.DiscountPercentage.Value / 100m))
+                         : (p.DiscountAmount.HasValue ? p.Price - p.DiscountAmount.Value : p.Price)
+                })
+                .ToList();
+
+            // Dùng console.log tại server để debug nếu cần
+            Console.WriteLine($"Tìm thấy {data.Count} sản phẩm cho từ khóa: {keyword}");
+
+            return Ok(data);
         }
     }
 }

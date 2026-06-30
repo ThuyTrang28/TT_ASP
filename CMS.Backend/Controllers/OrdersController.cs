@@ -6,7 +6,9 @@
 
 using CMS.Data;
 using CMS.Data.Entities;
+using CMS.Backend.Services; // Thư viện chứa VnPayLibrary
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
 
 namespace CMS.Backend.Controllers
@@ -16,16 +18,17 @@ namespace CMS.Backend.Controllers
     public class OrdersController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IConfiguration _configuration;
 
-        public OrdersController(ApplicationDbContext context)
+        public OrdersController(ApplicationDbContext context, IConfiguration configuration)
         {
             _context = context;
+            _configuration = configuration;
         }
 
         // =========================================================================
-        // 1. API ĐẶT HÀNG CORE (Mục 4 đề bài) - NHẬN GIỎ HÀNG TỪ REACTJS GỬI LÊN
+        // 1. API ĐẶT HÀNG CORE
         // =========================================================================
-        // POST: api/Orders
         [HttpPost]
         public IActionResult PlaceOrder([FromBody] OrderRequest request)
         {
@@ -34,105 +37,231 @@ namespace CMS.Backend.Controllers
                 return BadRequest(new { success = false, message = "Giỏ hàng trống hoặc dữ liệu không hợp lệ." });
             }
 
-            // Sử dụng Transaction để đảm bảo an toàn dữ liệu: Nếu một bước lỗi, toàn bộ sẽ hủy (Rollback)
             using (var transaction = _context.Database.BeginTransaction())
             {
                 try
                 {
-                    // Bước 1: Tạo bản ghi mới vào bảng Order
                     var order = new Order
                     {
                         CustomerId = request.CustomerId,
                         Notes = request.Notes,
-                        OrderDate = DateTime.Now, // Tự động sinh ngày đặt hiện tại
-                        Status = 0 // Mặc định gán 0: Chờ duyệt theo yêu cầu đề bài
+                        OrderDate = DateTime.Now,
+                        Status = 0, // Chờ duyệt
+                        ShippingName = request.ShippingName,
+                        ShippingPhone = request.ShippingPhone,
+                        ShippingAddress = request.ShippingAddress,
+                        PaymentMethod = request.PaymentMethod
                     };
 
                     _context.Orders.Add(order);
-                    _context.SaveChanges(); // Lưu trước để thực thể tự sinh ra Order.Id khóa chính
+                    _context.SaveChanges();
 
-                    // Bước 2: Chạy vòng lặp qua danh sách giỏ hàng gửi lên để nạp vào OrderDetail
+                    decimal totalAmount = 0; // Biến tính tổng tiền cho VNPAY
+
                     foreach (var item in request.CartItems)
                     {
-                        // Tìm thông tin sản phẩm gốc trong DB để lấy đúng giá hiện hành và trừ kho
                         var product = _context.Products.FirstOrDefault(p => p.Id == item.ProductId);
                         if (product == null)
-                        {
-                            return NotFound(new { success = false, message = $"Sản phẩm ID #{item.ProductId} không tồn tại trên hệ thống." });
-                        }
+                            return NotFound(new { success = false, message = $"Sản phẩm ID #{item.ProductId} không tồn tại." });
 
-                        // Kiểm tra tồn kho khả dụng trước khi cho phép đặt hàng
                         if (product.StockQuantity < item.Quantity)
-                        {
-                            return BadRequest(new { success = false, message = $"Sản phẩm '{product.Name}' hiện chỉ còn tồn {product.StockQuantity} cái, không đủ cung cấp." });
-                        }
+                            return BadRequest(new { success = false, message = $"Sản phẩm '{product.Name}' không đủ tồn kho." });
 
-                        // Thêm vào bảng OrderDetail
                         var orderDetail = new OrderDetail
                         {
-                            OrderId = order.Id, // Gắn ID của đơn hàng vừa tạo ở bước 1
+                            OrderId = order.Id,
                             ProductId = item.ProductId,
                             Quantity = item.Quantity,
-                            UnitPrice = product.Price // Lấy đúng giá Price của sản phẩm gán vào trường UnitPrice
+                            UnitPrice = product.Price
                         };
                         _context.OrderDetails.Add(orderDetail);
 
-                        // Bước 3: Khấu trừ số lượng tồn kho StockQuantity của sản phẩm trong bảng Product
+                        totalAmount += (product.Price * item.Quantity);
                         product.StockQuantity -= item.Quantity;
                         _context.Products.Update(product);
                     }
 
-                    // Lưu toàn bộ thay đổi (Chi tiết đơn & Trừ kho) xuống SQL Server
                     _context.SaveChanges();
-
-                    // Xác nhận hoàn thành chuỗi tiến trình thành công
                     transaction.Commit();
 
-                    return Ok(new
+                    // Xử lý VNPAY nếu phương thức thanh toán là VNPAY
+                    if (request.PaymentMethod == "VNPAY")
                     {
-                        success = true,
-                        message = "Đặt hàng thành công!",
-                        orderId = order.Id
-                    });
+                        string paymentUrl = CreateVnPayUrl(order.Id, totalAmount);
+                        return Ok(new { success = true, paymentUrl = paymentUrl });
+                    }
+
+                    return Ok(new { success = true, message = "Đặt hàng thành công!" });
                 }
                 catch (Exception ex)
                 {
-                    // Nếu xảy ra bất kỳ lỗi gì, hoàn tác lại toàn bộ dữ liệu như ban đầu
                     transaction.Rollback();
-                    return StatusCode(500, new { success = false, message = "Lỗi hệ thống khi xử lý đơn hàng.", error = ex.Message });
+                    return StatusCode(500, new { success = false, message = "Lỗi hệ thống.", error = ex.Message });
                 }
             }
         }
 
         // =========================================================================
-        // 2. API TRA CỨU LỊCH SỬ ĐƠN HÀNG (Mục 4 đề bài) - DÀNH CHO TRANG CÁ NHÂN KHÁCH
+        // HÀM HỖ TRỢ THANH TOÁN VNPAY
         // =========================================================================
-        // GET: api/Orders/customer/{customerId}
+        private string CreateVnPayUrl(int orderId, decimal amount)
+        {
+            var vnpayConfig = _configuration.GetSection("VnPay");
+            var vnpay = new VnPayLibrary();
+
+            vnpay.AddRequestData("vnp_Version", "2.1.0");
+            vnpay.AddRequestData("vnp_Command", "pay");
+            string? tmnCode = vnpayConfig["TmnCode"];
+
+            if (!string.IsNullOrEmpty(tmnCode))
+            {
+                vnpay.AddRequestData("vnp_TmnCode", tmnCode);
+            }
+            else
+            {
+                // Bạn có thể log lỗi hoặc ném ra ngoại lệ nếu thiếu cấu hình quan trọng này
+                throw new Exception("Cấu hình TmnCode trong appsettings.json bị thiếu hoặc trống!");
+            }
+            vnpay.AddRequestData("vnp_Amount", ((long)(amount * 100)).ToString());
+            vnpay.AddRequestData("vnp_CreateDate", DateTime.Now.ToString("yyyyMMddHHmmss"));
+            vnpay.AddRequestData("vnp_CurrCode", "VND");
+            // Thay dòng vnpay.AddRequestData("vnp_IpAddr", ...) bằng:
+            // 1. Sử dụng ?. để truy cập an toàn
+            // 2. Sử dụng ?? để gán IP mặc định nếu RemoteIpAddress là null
+            string ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
+
+            // 3. Xử lý trường hợp IPv6 trên localhost (Thường trả về ::1)
+            if (ipAddress == "::1")
+            {
+                ipAddress = "127.0.0.1";
+            }
+
+            vnpay.AddRequestData("vnp_IpAddr", ipAddress);
+            vnpay.AddRequestData("vnp_IpAddr", ipAddress);
+            vnpay.AddRequestData("vnp_Locale", "vn");
+            vnpay.AddRequestData("vnp_OrderInfo", $"Thanh toan don hang {orderId}");
+            vnpay.AddRequestData("vnp_ReturnUrl", vnpayConfig["ReturnUrl"] ?? "");
+            vnpay.AddRequestData("vnp_TxnRef", orderId.ToString());
+            vnpay.AddRequestData("vnp_OrderType", "other");
+
+            return vnpay.CreateRequestUrl(
+                 vnpayConfig["BaseUrl"] ?? "",
+                 vnpayConfig["HashSecret"] ?? ""
+             );
+        }
+
+        // =========================================================================
+        // 2. API TRA CỨU LỊCH SỬ ĐƠN HÀNG (ĐÃ CẬP NHẬT)
+        // =========================================================================
         [HttpGet("customer/{customerId}")]
         public IActionResult GetOrderHistory(int customerId)
         {
-            var history = _context.Orders
+            // 1. Lấy dữ liệu từ DB, bao gồm cả chi tiết đơn hàng
+            var orders = _context.Orders
+                .Include(o => o.OrderDetails)
                 .Where(o => o.CustomerId == customerId)
-                .OrderByDescending(o => o.OrderDate) // Đơn mới nhất xếp lên đầu
-                .Select(o => new {
-                    o.Id,
-                    o.OrderDate,
-                    o.Notes,
-                    o.Status
-                })
+                .OrderByDescending(o => o.OrderDate)
                 .ToList();
 
-            return Ok(history);
+            // 2. Chuyển đổi sang object JSON chứa đầy đủ thông tin cần thiết
+            var result = orders.Select(o => new
+            {
+                id = o.Id,
+                orderDate = o.OrderDate,
+                status = o.Status,
+                paymentMethod = o.PaymentMethod, // THÊM TRƯỜNG NÀY ĐỂ FRONTEND NHẬN ĐƯỢC
+                totalPrice = o.OrderDetails.Sum(od => od.UnitPrice * od.Quantity)
+            }).ToList();
+
+            return Ok(result);
+        }
+
+        // =========================================================================
+        // 3. API XỬ LÝ PHẢN HỒI TỪ VNPAY
+        // =========================================================================
+        [HttpGet("vnpay-return")]
+        public IActionResult VnPayReturn()
+        {
+            var vnpayData = Request.Query;
+            var vnpayConfig = _configuration.GetSection("VnPay");
+            var vnpay = new VnPayLibrary();
+
+            foreach (var key in vnpayData.Keys)
+            {
+                if (!string.IsNullOrEmpty(key) && key.StartsWith("vnp_"))
+                {
+                    string value = vnpayData[key].ToString();
+                    vnpay.AddRequestData(key, value);
+                }
+            }
+
+            if (!vnpayData.TryGetValue("vnp_SecureHash", out var secureHashValue))
+            {
+                return BadRequest("Thiếu chữ ký bảo mật (vnp_SecureHash).");
+            }
+            string vnp_SecureHash = secureHashValue.ToString();
+            string? hashSecret = vnpayConfig["HashSecret"];
+
+            if (string.IsNullOrEmpty(hashSecret))
+            {
+                return StatusCode(500, "Cấu hình VnPay HashSecret chưa được thiết lập.");
+            }
+
+            bool checkSignature = vnpay.ValidateSignature(vnp_SecureHash, hashSecret);
+
+            if (checkSignature)
+            {
+                if (!vnpayData.TryGetValue("vnp_TxnRef", out var txnRefValue))
+                {
+                    return BadRequest("Không tìm thấy mã đơn hàng trong phản hồi.");
+                }
+                string orderId = txnRefValue.ToString();
+                if (!vnpayData.TryGetValue("vnp_ResponseCode", out var responseCodeValue))
+                {
+                    return BadRequest("Thiếu mã phản hồi từ VNPAY.");
+                }
+                string vnp_ResponseCode = responseCodeValue.ToString();
+
+                if (vnp_ResponseCode == "00") // Thanh toán thành công
+                {
+                    var order = _context.Orders.Find(int.Parse(orderId));
+                    if (order != null)
+                    {
+                        order.Status = 1; // Cập nhật trạng thái đã thanh toán
+                        _context.SaveChanges();
+                    }
+                    return Redirect("http://localhost:5173/order-success");
+                }
+            }
+            return Redirect("http://localhost:5173/order-failed");
+        }
+
+        [HttpPost("cancel/{orderId}")]
+        public IActionResult CancelOrder(int orderId)
+        {
+            var order = _context.Orders.FirstOrDefault(o => o.Id == orderId);
+
+            if (order == null) return NotFound("Không tìm thấy đơn hàng.");
+
+            // Chỉ cho phép hủy nếu trạng thái là 0 (Chờ duyệt)
+            if (order.Status != 0)
+                return BadRequest("Chỉ có thể hủy đơn hàng khi đang ở trạng thái 'Chờ duyệt'.");
+
+            order.Status = 3; // Cập nhật trạng thái thành Đã hủy
+            _context.SaveChanges();
+
+            return Ok(new { message = "Hủy đơn hàng thành công!" });
         }
     }
 
-    // =========================================================================
-    // ĐỊNH NGHĨA CÁC ĐỐI TƯỢNG DTO (DATA TRANSFER OBJECT) NHẬN DỮ LIỆU JSON TỪ FE
-    // =========================================================================
     public class OrderRequest
     {
         public int CustomerId { get; set; }
         public string? Notes { get; set; }
+        public string ShippingName { get; set; } = string.Empty;
+        public string ShippingPhone { get; set; } = string.Empty;
+        public string ShippingAddress { get; set; } = string.Empty;
+        public string PaymentMethod { get; set; } = "COD";
         public List<CartItemDto> CartItems { get; set; } = new List<CartItemDto>();
     }
 

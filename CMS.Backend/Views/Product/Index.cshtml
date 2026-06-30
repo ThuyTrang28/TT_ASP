@@ -69,8 +69,23 @@
                                         @(item.CategoryProduct != null ? item.CategoryProduct.Name : "Chưa phân loại")
                                     </span>
                                 </td>
-                                <td class="text-danger fw-bold">
-                                    @item.Price.ToString("#,##0") đ
+                                <td class="text-start">
+                                    @if (item.DiscountPercentage.HasValue && item.DiscountPercentage > 0)
+                                    {
+                                        <div class="text-danger fw-bold">@item.FinalPrice.ToString("#,##0") đ</div>
+                                        <div class="small text-muted text-decoration-line-through">@item.Price.ToString("#,##0") đ</div>
+                                        <span class="badge bg-danger" style="font-size: 0.65em;">-@item.DiscountPercentage%</span>
+                                    }
+                                    else if (item.DiscountAmount.HasValue && item.DiscountAmount > 0)
+                                    {
+                                        <div class="text-danger fw-bold">@item.FinalPrice.ToString("#,##0") đ</div>
+                                        <div class="small text-muted text-decoration-line-through">@item.Price.ToString("#,##0") đ</div>
+                                        <span class="badge bg-warning text-dark" style="font-size: 0.65em;">-@item.DiscountAmount.Value.ToString("#,##0")đ</span>
+                                    }
+                                    else
+                                    {
+                                        <div class="text-dark fw-bold">@item.Price.ToString("#,##0") đ</div>
+                                    }
                                 </td>
                                 <td>
                                     @if (item.StockQuantity > 20)
